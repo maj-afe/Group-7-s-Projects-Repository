@@ -4,7 +4,7 @@ import json
 import sys
 from vosk import Model, KaldiRecognizer
 
-VOSK_MODEL_DIR = "/home/aniruddh_sen/Documents/VSC/PYthon/face-cursor-wayland/lib/vosk-model-small-en-us-0.15/"
+VOSK_MODEL_DIR = "/home/aniruddh_sen/Documents/VSC/PYthon/face-cursor-wayland/models/vosk-model-small-en-in-0.4/"
 SAMPLE_RATE = 16000
 
 audio_queue = queue.Queue()
