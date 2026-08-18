@@ -23,5 +23,5 @@ dist/
 # IDE / Editor configs
 .vscode/
 .idea/
-.token/
+*.token/
 .aiapiv1ch/
