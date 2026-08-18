@@ -113,7 +113,7 @@ except PermissionError:
 
 # Initialize MediaPipe Task
 base_options = python.BaseOptions(
-    model_asset_path="/home/aniruddh_sen/Documents/VSC/PYthon/face-cursor-wayland/face_landmarker.task"
+    model_asset_path="/home/aniruddh_sen/Documents/VSC/PYthon/face-cursor-wayland/app/camera/face_landmarker.task"
 )
 options = vision.FaceLandmarkerOptions(
     base_options=base_options,
