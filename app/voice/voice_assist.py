@@ -1,81 +1,176 @@
-import sounddevice as sd
-import queue
-import json
-import sys
-import os
-from vosk import Model, KaldiRecognizer
-from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import QObject, Signal
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-VOSK_MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(SCRIPT_DIR)), "models", "vosk-model-small-en-in-0.4")
-SAMPLE_RATE = 16000
+from .speech_recognition import SpeechRecognitionThread
+from .command_handler import CommandHandler
 
-class VoiceThread(QThread):
-    command_recognized = Signal(str)
-    status_update = Signal(str)
+
+class VoiceAssistant(QObject):
+
+    command_executed = Signal(str, str)
+    status_changed = Signal(str)
     error_occurred = Signal(str)
 
     def __init__(self):
+
         super().__init__()
-        self.audio_queue = queue.Queue()
-        self.is_running = True
 
-    def audio_callback(self, indata, frames, time, status):
-        if status:
-            pass # ignore minor status prints to avoid console spam
-        if self.is_running:
-            self.audio_queue.put(bytes(indata))
+        self.command_handler = CommandHandler()
 
-    def run(self):
-        self.status_update.emit("Initializing...")
-        if not os.path.exists(VOSK_MODEL_DIR):
-            self.error_occurred.emit(f"Vosk model directory not found at: {VOSK_MODEL_DIR}")
+        self.recognition_thread = None
+
+        self.running = False
+
+    # =====================================================
+    # START VOICE
+    # =====================================================
+
+    def start(self):
+
+        if self.running:
             return
 
-        try:
-            model = Model(VOSK_MODEL_DIR)
-        except Exception as e:
-            self.error_occurred.emit(f"Load Vosk fail: {e}")
-            return
+        print("[VoiceAssistant] Starting...")
 
-        recognizer = KaldiRecognizer(model, SAMPLE_RATE)
-        self.status_update.emit("Listening")
+        self.recognition_thread = (
+            SpeechRecognitionThread()
+        )
 
-        try:
-            with sd.RawInputStream(
-                samplerate=SAMPLE_RATE,
-                blocksize=8000,
-                dtype="int16",
-                channels=1,
-                callback=self.audio_callback
-            ):
-                while self.is_running:
-                    try:
-                        data = self.audio_queue.get(timeout=0.1)
-                        if recognizer.AcceptWaveform(data):
-                            res = json.loads(recognizer.Result())
-                            text = res.get("text", "")
-                            if text:
-                                self.command_recognized.emit(text)
-                    except queue.Empty:
-                        continue
-        except sd.PortAudioError as e:
-            self.error_occurred.emit(f"Could not open audio input stream: {e}")
-        except Exception as e:
-            self.error_occurred.emit(f"Unexpected error in voice module: {e}")
-        finally:
-            self.status_update.emit("Inactive")
+        self.recognition_thread.command_recognized.connect(
+            self.handle_command
+        )
+
+        self.recognition_thread.status_update.connect(
+            self.handle_status
+        )
+
+        self.recognition_thread.error_occurred.connect(
+            self.handle_error
+        )
+
+        self.running = True
+
+        self.recognition_thread.start()
+
+    # =====================================================
+    # STOP VOICE
+    # =====================================================
 
     def stop(self):
-        self.is_running = False
-        self.wait()
 
-if __name__ == "__main__":
-    from PySide6.QtWidgets import QApplication
-    app = QApplication([])
-    thread = VoiceThread()
-    thread.command_recognized.connect(lambda cmd: print(f"Command: {cmd}"))
-    thread.status_update.connect(lambda st: print(f"Status: {st}"))
-    thread.error_occurred.connect(lambda e: print(f"Error: {e}"))
-    thread.start()
-    sys.exit(app.exec())
+        if not self.running:
+            return
+
+        print("[VoiceAssistant] Stopping...")
+
+        self.running = False
+
+        if self.recognition_thread:
+
+            self.recognition_thread.stop()
+
+            self.recognition_thread = None
+
+        self.status_changed.emit(
+            "Inactive"
+        )
+
+    # =====================================================
+    # COMMAND
+    # =====================================================
+
+    def handle_command(self, text):
+
+        print(
+            f"[VoiceAssistant] Command received: {text}"
+        )
+
+        try:
+
+            result = self.command_handler.execute(
+                text
+            )
+
+            if result:
+
+                self.command_executed.emit(
+                    text,
+                    result
+                )
+
+            else:
+
+                self.command_executed.emit(
+                    text,
+                    "unknown"
+                )
+
+        except Exception as e:
+
+            print(
+                "[VoiceAssistant] Command error:",
+                e
+            )
+
+            self.error_occurred.emit(
+                str(e)
+            )
+
+    # =====================================================
+    # STATUS
+    # =====================================================
+
+    def handle_status(self, status):
+
+        print(
+            f"[VoiceAssistant] Status: {status}"
+        )
+
+        self.status_changed.emit(
+            status
+        )
+
+    # =====================================================
+    # ERROR
+    # =====================================================
+
+    def handle_error(self, error):
+
+        print(
+            f"[VoiceAssistant] Error: {error}"
+        )
+
+        self.error_occurred.emit(
+            error
+        )
+
+    # =====================================================
+    # EMERGENCY STOP
+    # =====================================================
+
+    def emergency_stop(self):
+
+        self.command_handler.enabled = False
+
+        print(
+            "[VoiceAssistant] EMERGENCY STOP"
+        )
+
+    # =====================================================
+    # ENABLE AGAIN
+    # =====================================================
+
+    def enable_control(self):
+
+        self.command_handler.reset_emergency_stop()
+
+        print(
+            "[VoiceAssistant] Control enabled"
+        )
+
+    # =====================================================
+    # STATUS
+    # =====================================================
+
+    def is_active(self):
+
+        return self.running

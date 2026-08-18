@@ -1,24 +1,48 @@
 import sys
 import os
 
-# Add the root directory to sys.path so we can import app modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add project root to Python path
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(__file__)
+        )
+    )
+)
 
 from PySide6.QtWidgets import QApplication
+
 from app.ui.main_window import MainWindow
 
+
 def main():
+
+    # ==========================================
+    # CREATE QT APPLICATION
+    # ==========================================
+
     app = QApplication(sys.argv)
-    
-    # Set default font
+
+    # Default font
     font = app.font()
     font.setFamily("Segoe UI")
     font.setPointSize(10)
     app.setFont(font)
 
+    # ==========================================
+    # MAIN WINDOW
+    # ==========================================
+
     window = MainWindow()
+
     window.show()
+
+    # ==========================================
+    # EVENT LOOP
+    # ==========================================
+
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
