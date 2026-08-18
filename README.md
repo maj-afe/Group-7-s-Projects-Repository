@@ -8,7 +8,9 @@ BUG is an accessible, hands-free browsing assistant designed to let users contro
 - **Face-Tracking Mouse Control**: Uses your webcam and Google's MediaPipe Face Landmarker to track your nose bridge and translate it into smooth cursor movements.
 - **Mouth-Click System**: Automatically triggers left-clicks when you open your mouth.
 - **Offline Voice Recognition**: Integrated with Vosk KaldiRecognizer for fully offline, private speech recognition.
-- **Modern Dashboard UI**: A sleek, dark-mode PySide6 interface to monitor systems, toggle pipelines, and calibrate your camera.
+  - *Current Status*: The voice pipeline actively listens and transcribes spoken English into text in real-time, displaying it on the dashboard.
+  - *Next Steps*: Map specific phrases (e.g., "scroll down", "open browser") to PyAutoGUI OS actions.
+- **Modern Dashboard UI**: A sleek, dark-mode PySide6 interface designed specifically for accessibility. It provides massive, high-contrast buttons and a minimalist layout to prevent distraction.
 
 ## 💻 OS Compatibility
 - **Windows 10/11**: Fully supported out of the box.
