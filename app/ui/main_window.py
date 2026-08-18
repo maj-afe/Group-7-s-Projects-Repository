@@ -1,9 +1,10 @@
-
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QFrame, QScrollArea
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon, QColor, QPalette
+from PySide6.QtGui import QIcon, QColor, QPalette, QPixmap
 
 from app.ui.dashboard import DashboardWidget
+from app.voice.voice_assist import VoiceThread
+from app.camera.face_cursor_windows_varient import CameraThread
 
 class SidebarButton(QPushButton):
     def __init__(self, text, icon_name=None, active=False):
@@ -101,3 +102,70 @@ class MainWindow(QMainWindow):
         scroll_area.setWidget(self.dashboard)
         
         main_layout.addWidget(scroll_area)
+
+        # Initialize Threads
+        self.voice_thread = VoiceThread()
+        self.camera_thread = CameraThread()
+
+        # Connect Signals
+        self.setup_connections()
+
+    def setup_connections(self):
+        # Quick Action Buttons
+        self.dashboard.quick_actions_card.btn_start.clicked.connect(self.start_all)
+        self.dashboard.quick_actions_card.btn_pause.clicked.connect(self.pause_all)
+        self.dashboard.quick_actions_card.btn_voice.clicked.connect(self.toggle_voice)
+        self.dashboard.quick_actions_card.btn_calibrate.clicked.connect(self.camera_thread.calibrate)
+
+        # Voice Thread Signals
+        self.voice_thread.status_update.connect(lambda s: self.dashboard.status_voice.set_status(s, "#10B981" if s == "Listening" else "#9CA3AF"))
+        self.voice_thread.command_recognized.connect(self.update_voice_command)
+        self.voice_thread.error_occurred.connect(lambda e: print(f"[Voice Error] {e}"))
+
+        # Camera Thread Signals
+        self.camera_thread.status_update.connect(lambda s: self.dashboard.status_camera.set_status(s, "#10B981" if s == "Active" else "#9CA3AF"))
+        self.camera_thread.status_update.connect(lambda s: self.dashboard.status_head.set_status(s, "#10B981" if s == "Active" else "#9CA3AF"))
+        self.camera_thread.frame_ready.connect(self.update_camera_frame)
+        self.camera_thread.error_occurred.connect(lambda e: print(f"[Camera Error] {e}"))
+
+    def start_all(self):
+        if not self.camera_thread.isRunning():
+            self.camera_thread.is_running = True
+            self.camera_thread.start()
+        if not self.voice_thread.isRunning():
+            self.voice_thread.is_running = True
+            self.voice_thread.start()
+        self.camera_thread.set_cursor_control(True)
+        self.dashboard.status_head.set_status("Active", "#10B981")
+
+    def pause_all(self):
+        self.camera_thread.set_cursor_control(False)
+        self.dashboard.status_head.set_status("Paused", "#F59E0B")
+        if self.voice_thread.isRunning():
+            self.voice_thread.stop()
+
+    def toggle_voice(self):
+        if self.voice_thread.isRunning():
+            self.voice_thread.stop()
+        else:
+            self.voice_thread.is_running = True
+            self.voice_thread.start()
+
+    def update_voice_command(self, text):
+        self.dashboard.voice_command_lbl.setText(f"Recognized Command\n{text}")
+
+    def update_camera_frame(self, q_img):
+        # Scale image to fit the label width while maintaining aspect ratio
+        label_width = self.dashboard.hands_free_card.camera_feed_label.width()
+        scaled_img = q_img.scaledToWidth(label_width, Qt.SmoothTransformation)
+        self.dashboard.hands_free_card.camera_feed_label.setPixmap(QPixmap.fromImage(scaled_img))
+        self.dashboard.hands_free_card.live_label.setText("● LIVE")
+        self.dashboard.hands_free_card.live_label.setStyleSheet("color: #10B981; font-weight: bold; font-size: 10px; background: transparent;")
+
+    def closeEvent(self, event):
+        # Ensure threads are stopped before exiting
+        if self.camera_thread.isRunning():
+            self.camera_thread.stop()
+        if self.voice_thread.isRunning():
+            self.voice_thread.stop()
+        super().closeEvent(event)

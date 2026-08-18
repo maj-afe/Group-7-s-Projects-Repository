@@ -29,10 +29,9 @@ class SystemStatusIndicator(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        # Dot
-        dot = QLabel("●")
-        dot.setStyleSheet(f"color: {color}; font-size: 10px;")
-        layout.addWidget(dot)
+        self.dot = QLabel("●")
+        self.dot.setStyleSheet(f"color: {color}; font-size: 10px;")
+        layout.addWidget(self.dot)
         
         name_label = QLabel(name)
         name_label.setStyleSheet("color: #9CA3AF; font-size: 12px;")
@@ -40,9 +39,14 @@ class SystemStatusIndicator(QWidget):
         
         layout.addStretch()
         
-        status_label = QLabel(status)
-        status_label.setStyleSheet(f"color: {color}; font-size: 12px;")
-        layout.addWidget(status_label)
+        self.status_label = QLabel(status)
+        self.status_label.setStyleSheet(f"color: {color}; font-size: 12px;")
+        layout.addWidget(self.status_label)
+
+    def set_status(self, status, color="#10B981"):
+        self.status_label.setText(status)
+        self.status_label.setStyleSheet(f"color: {color}; font-size: 12px;")
+        self.dot.setStyleSheet(f"color: {color}; font-size: 10px;")
 
 class HandsFreeCard(CardWidget):
     def __init__(self):
@@ -63,20 +67,17 @@ class HandsFreeCard(CardWidget):
         self.layout.addLayout(header_layout)
         
         # Camera Feed Mockup
-        camera_frame = QFrame()
-        camera_frame.setStyleSheet("""
-            background-color: #0B0B14;
-            border-radius: 8px;
-        """)
-        camera_frame.setMinimumHeight(200)
-        camera_layout = QVBoxLayout(camera_frame)
+        self.camera_feed_label = QLabel()
+        self.camera_feed_label.setAlignment(Qt.AlignCenter)
+        self.camera_feed_label.setStyleSheet("background-color: #0B0B14; border-radius: 8px;")
+        self.camera_feed_label.setMinimumHeight(300)
         
-        live_label = QLabel("● LIVE")
-        live_label.setStyleSheet("color: #10B981; font-weight: bold; font-size: 10px;")
-        camera_layout.addWidget(live_label, alignment=Qt.AlignRight | Qt.AlignTop)
-        camera_layout.addStretch()
+        # Overlay for live indicator
+        self.live_label = QLabel("● INACTIVE", self.camera_feed_label)
+        self.live_label.setStyleSheet("color: #9CA3AF; font-weight: bold; font-size: 10px; background: transparent;")
+        self.live_label.move(10, 10)
         
-        self.layout.addWidget(camera_frame)
+        self.layout.addWidget(self.camera_feed_label)
         
         # Status indicators bottom
         status_hlayout = QHBoxLayout()
@@ -100,15 +101,15 @@ class QuickActionsCard(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
         
-        btn1 = self.create_btn("Start Voice", "Listening", "#2E1A47", "#8B5CF6")
-        btn2 = self.create_btn("Calibrate", "Adjust system", "#1A2E47", "#3B82F6")
-        btn3 = self.create_btn("Start", "All Systems", "#10472D", "#10B981")
-        btn4 = self.create_btn("Pause", "All Systems", "#472A1A", "#F59E0B")
+        self.btn_voice = self.create_btn("Start Voice", "Listening", "#2E1A47", "#8B5CF6")
+        self.btn_calibrate = self.create_btn("Calibrate", "Adjust system", "#1A2E47", "#3B82F6")
+        self.btn_start = self.create_btn("Start", "All Systems", "#10472D", "#10B981")
+        self.btn_pause = self.create_btn("Pause", "All Systems", "#472A1A", "#F59E0B")
         
-        layout.addWidget(btn1)
-        layout.addWidget(btn2)
-        layout.addWidget(btn3)
-        layout.addWidget(btn4)
+        layout.addWidget(self.btn_voice)
+        layout.addWidget(self.btn_calibrate)
+        layout.addWidget(self.btn_start)
+        layout.addWidget(self.btn_pause)
         
     def create_btn(self, title, subtitle, bg_color, accent):
         btn = QPushButton()
@@ -170,8 +171,10 @@ class DashboardWidget(QWidget):
         left_layout = QVBoxLayout()
         left_layout.setSpacing(20)
         
-        left_layout.addWidget(HandsFreeCard())
-        left_layout.addWidget(QuickActionsCard())
+        self.hands_free_card = HandsFreeCard()
+        self.quick_actions_card = QuickActionsCard()
+        left_layout.addWidget(self.hands_free_card)
+        left_layout.addWidget(self.quick_actions_card)
         
         # Bottom row in left column (My Study, AI Assistant, Voice Center)
         bottom_row = QHBoxLayout()
@@ -198,15 +201,14 @@ class DashboardWidget(QWidget):
         ai_card.layout.addWidget(inp)
         bottom_row.addWidget(ai_card)
         
-        # Voice Center Mini Card
-        voice_card = CardWidget("Voice Center")
-        v_lbl = QLabel("Recognized Command\nScroll down")
-        v_lbl.setStyleSheet("color: #FFFFFF; font-size: 16px; font-weight: bold;")
-        voice_card.layout.addWidget(v_lbl)
+        self.voice_card = CardWidget("Voice Center")
+        self.voice_command_lbl = QLabel("Recognized Command\nNone")
+        self.voice_command_lbl.setStyleSheet("color: #FFFFFF; font-size: 16px; font-weight: bold;")
+        self.voice_card.layout.addWidget(self.voice_command_lbl)
         vbtn = QPushButton("▶ Execute")
         vbtn.setStyleSheet("background-color: #10B981; color: white; padding: 8px; border-radius: 6px;")
-        voice_card.layout.addWidget(vbtn)
-        bottom_row.addWidget(voice_card)
+        self.voice_card.layout.addWidget(vbtn)
+        bottom_row.addWidget(self.voice_card)
         
         left_layout.addLayout(bottom_row)
         
@@ -215,9 +217,13 @@ class DashboardWidget(QWidget):
         right_layout.setSpacing(20)
         
         status_card = CardWidget("System Status")
-        status_card.layout.addWidget(SystemStatusIndicator("Camera", "Active"))
-        status_card.layout.addWidget(SystemStatusIndicator("Head Tracking", "Active"))
-        status_card.layout.addWidget(SystemStatusIndicator("Voice Recognition", "Active"))
+        self.status_camera = SystemStatusIndicator("Camera", "Inactive", "#9CA3AF")
+        self.status_head = SystemStatusIndicator("Head Tracking", "Inactive", "#9CA3AF")
+        self.status_voice = SystemStatusIndicator("Voice Recognition", "Inactive", "#9CA3AF")
+        
+        status_card.layout.addWidget(self.status_camera)
+        status_card.layout.addWidget(self.status_head)
+        status_card.layout.addWidget(self.status_voice)
         status_card.layout.addWidget(SystemStatusIndicator("Internet", "Connected"))
         right_layout.addWidget(status_card)
         
