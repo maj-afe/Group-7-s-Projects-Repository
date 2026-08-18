@@ -1,0 +1,27 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Python cache and build files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Wayland / C / C++ build files (if compiling native code)
+build/
+dist/
+*.o
+*.out
+
+# Environment variables & secrets
+.env
+*.pem
+
+# IDE / Editor configs
+.vscode/
+.idea/
+*.token/
+.aiapiv1ch/
