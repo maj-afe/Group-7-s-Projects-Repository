@@ -35,6 +35,7 @@ class CameraThread(QThread):
         self.alpha = 0.25
         self.MOUTH_OPEN_THRESHOLD = 0.035
         self.is_mouth_open = False
+        self.back_triggered = False
 
     def calibrate(self):
         self.needs_calibration = True
@@ -114,6 +115,22 @@ class CameraThread(QThread):
                     self.smooth_y = self.alpha * target_y + (1 - self.alpha) * self.smooth_y
 
                     pyautogui.moveTo(int(self.smooth_x), int(self.smooth_y))
+
+                    # Direct gesture scrolling based on vertical head movement (dy)
+                    if dy < -0.04: # Looking up
+                        scroll_speed = int((abs(dy) - 0.04) * 1500)
+                        pyautogui.scroll(scroll_speed)
+                    elif dy > 0.04: # Looking down
+                        scroll_speed = int((abs(dy) - 0.04) * 1500)
+                        pyautogui.scroll(-scroll_speed)
+
+                    # Back navigation on horizontal head movement (dx)
+                    if dx < -0.15 or dx > 0.15: # Head turned completely to the side
+                        if not self.back_triggered:
+                            pyautogui.hotkey('browserback')
+                            self.back_triggered = True
+                    elif abs(dx) < 0.08: # Reset trigger when head returns to center
+                        self.back_triggered = False
 
                     if mouth_distance > self.MOUTH_OPEN_THRESHOLD:
                         if not self.is_mouth_open:
