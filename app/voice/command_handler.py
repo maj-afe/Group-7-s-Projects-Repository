@@ -847,6 +847,40 @@ class CommandHandler:
         if not normalized:
             return None
 
+        # --- FUZZY MATCHING LAYER ---
+        if not (normalized.startswith("search") or normalized.startswith("search for")):
+            import difflib
+            expected_commands = [
+                "stop typing", "stop dictation", "exit typing", "end typing",
+                "emergency stop", "stop automation", "stop control", "disable control",
+                "enable voice", "turn on voice", "disable voice", "turn off voice",
+                "enable control", "enable automation",
+                "click", "left click", "double click", "double-click", "right click", "right-click",
+                "scroll down", "down", "page down", "scroll up", "up", "page up",
+                "scroll faster", "scroll slower", "stop scrolling", "stop scroll", "stop",
+                "go back", "back", "previous page", "go forward", "forward", "next page",
+                "refresh page", "refresh", "reload page", "reload",
+                "new tab", "open new tab", "close tab", "next tab", "previous tab", "prev tab",
+                "zoom in", "zoom out", "reset zoom", "fullscreen", "full screen", "exit fullscreen",
+                "select all", "copy", "paste", "cut", "undo", "redo", "delete last word", "delete word",
+                "press enter", "enter", "press tab", "tab", "press escape", "escape", "esc", "backspace", "press backspace",
+                "switch window", "next window", "change window", "minimize window", "minimize", "close window",
+                "play", "pause", "mute", "unmute", "volume up", "increase volume", "louder", "sound up",
+                "volume down", "decrease volume", "quieter", "sound down", "next video", "next media",
+                "skip forward", "forward ten seconds", "forward 10 seconds", "jump ahead",
+                "skip back", "back ten seconds", "rewind", "video back",
+                "open history", "history", "open downloads", "downloads", "open bookmarks", "bookmarks",
+                "start typing", "start dictation",
+                "enable head tracking", "turn on head tracking", "disable head tracking", "turn off head tracking",
+                "enable mouth click", "disable mouth click",
+                "start calibration", "calibrate", "calibrate mouth", "mouth calibrate", "start mouth calibration", "reset calibration",
+                "help", "yes", "yep", "yeah", "no", "nope", "cancel"
+            ]
+            matches = difflib.get_close_matches(normalized, expected_commands, n=1, cutoff=0.7)
+            if matches:
+                normalized = matches[0]
+        # ----------------------------
+
         print(f"[Voice] Heard: {normalized}")
 
         # -----------------------------------------------------
