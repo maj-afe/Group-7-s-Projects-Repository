@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QMainWindow
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap
 
 from app.ui.dashboard import DashboardWidget
@@ -119,6 +119,9 @@ class MainWindow(QMainWindow):
         self.camera_thread.set_cursor_control(
             True
         )
+
+        # Auto-calibrate after 3 seconds
+        QTimer.singleShot(3000, self.camera_thread.calibrate)
 
         # ------------------------------------------
         # Voice

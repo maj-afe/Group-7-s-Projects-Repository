@@ -874,9 +874,11 @@ class CommandHandler:
                 "enable head tracking", "turn on head tracking", "disable head tracking", "turn off head tracking",
                 "enable mouth click", "disable mouth click",
                 "start calibration", "calibrate", "calibrate mouth", "mouth calibrate", "start mouth calibration", "reset calibration",
-                "help", "yes", "yep", "yeah", "no", "nope", "cancel"
+                "help", "yes", "yep", "yeah", "no", "nope", "cancel",
+                "save", "save as", "open file", "new file", "select next word", "select previous word",
+                "start of line", "end of line", "open start menu", "open task manager", "lock computer"
             ]
-            matches = difflib.get_close_matches(normalized, expected_commands, n=1, cutoff=0.7)
+            matches = difflib.get_close_matches(normalized, expected_commands, n=1, cutoff=0.6)
             if matches:
                 normalized = matches[0]
         # ----------------------------
@@ -1393,6 +1395,54 @@ class CommandHandler:
         if normalized == "cancel":
             pyautogui.press("esc")
             return self._done("cancel")
+
+        # =====================================================
+        # SYSTEM / FILE OPERATIONS
+        # =====================================================
+
+        if normalized == "save":
+            pyautogui.hotkey("ctrl", "s")
+            return self._done("save")
+
+        if normalized == "save as":
+            pyautogui.hotkey("ctrl", "shift", "s")
+            return self._done("save_as")
+
+        if normalized == "open file":
+            pyautogui.hotkey("ctrl", "o")
+            return self._done("open_file")
+
+        if normalized == "new file":
+            pyautogui.hotkey("ctrl", "n")
+            return self._done("new_file")
+
+        if normalized == "select next word":
+            pyautogui.hotkey("ctrl", "shift", "right")
+            return self._done("select_next_word")
+
+        if normalized == "select previous word":
+            pyautogui.hotkey("ctrl", "shift", "left")
+            return self._done("select_previous_word")
+
+        if normalized == "start of line":
+            pyautogui.press("home")
+            return self._done("start_of_line")
+
+        if normalized == "end of line":
+            pyautogui.press("end")
+            return self._done("end_of_line")
+
+        if normalized == "open start menu":
+            pyautogui.press("win")
+            return self._done("open_start_menu")
+
+        if normalized == "open task manager":
+            pyautogui.hotkey("ctrl", "shift", "esc")
+            return self._done("open_task_manager")
+
+        if normalized == "lock computer":
+            pyautogui.hotkey("win", "l")
+            return self._done("lock_computer")
 
         # =====================================================
         # UNKNOWN
