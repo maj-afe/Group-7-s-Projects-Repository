@@ -63,7 +63,8 @@ class CameraThread(QThread):
             self.error_occurred.emit(f"Failed to load MediaPipe model: {e}")
             return
 
-        cam = cv2.VideoCapture(0)
+        # Use DirectShow (CAP_DSHOW) on Windows to prevent MSMF grabFrame errors
+        cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         if not cam.isOpened():
             self.error_occurred.emit("Could not open camera (index 0).")
             landmarker.close()
