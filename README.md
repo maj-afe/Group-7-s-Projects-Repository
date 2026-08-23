@@ -2,7 +2,7 @@
 
 _Shared Repository for Final Year project development and documentation._
 
-BUG is an accessible, hands-free browsing assistant designed to let users control their computer using facial movements and voice commands. It features a modern desktop UI built with PySide6 that seamlessly connects computer vision and speech recognition pipelines.
+BUG is an accessible, hands-free browsing assistance system designed to let users control their computer using facial movements and voice commands. It features a modern desktop UI built with PySide6 that seamlessly connects computer vision and speech recognition pipelines.
 
 ## 🛠️ Technology Stack
 
