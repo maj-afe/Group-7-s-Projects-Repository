@@ -5,6 +5,7 @@ pip install pyinstaller pyinstaller-hooks-contrib
 Write-Host "Building standalone .exe for BUG Dashboard..."
 pyinstaller --noconfirm --onefile --windowed `
     --name "BUG_Dashboard" `
+    --paths . `
     --collect-all mediapipe `
     --collect-all faster_whisper `
     --collect-all silero_vad `

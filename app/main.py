@@ -2,13 +2,16 @@ import sys
 import os
 
 # Add project root to Python path
-sys.path.append(
-    os.path.dirname(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        )
-    )
-)
+if getattr(sys, 'frozen', False):
+    # When frozen, __file__ is sys._MEIPASS/main.py
+    # But the bundled modules are loaded from the internal PYZ archive.
+    # No need to modify sys.path for internal modules, but just in case:
+    project_root = sys._MEIPASS
+else:
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from PySide6.QtWidgets import QApplication
 
