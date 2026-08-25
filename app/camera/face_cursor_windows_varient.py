@@ -32,7 +32,7 @@ class CameraThread(QThread):
         self.deadzone_scale = 0.12
         self.smooth_x = self.SCREEN_W / 2
         self.smooth_y = self.SCREEN_H / 2
-        self.alpha = 0.25
+        self.alpha = 0.15
         self.MOUTH_OPEN_THRESHOLD = 0.035
         self.is_mouth_open = False
         self.back_triggered = False
