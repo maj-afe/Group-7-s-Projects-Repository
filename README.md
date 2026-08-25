@@ -159,3 +159,15 @@ To launch the BUG dashboard, simply run the main entry point:
 *(Alternatively, run `python app/main.py` if not using the helper script)*
 
 From the dashboard, you can click **"Start All Systems"** to activate the camera and voice pipelines!
+
+## 📦 Building a Standalone Executable
+
+If you want to package the application into a single `.exe` file that can be shared and run on any Windows machine without needing Python installed, you can use the included build script:
+
+1. Ensure you have installed the requirements (`pip install -r requirements.txt`).
+2. Run the build script in PowerShell:
+   ```bash
+   .\build.ps1
+   ```
+3. The standalone executable will be generated at `dist\BUG_Dashboard.exe`.
+   *(Note: The executable is large (~400MB) because it bundles PyTorch and OpenCV. On its first run, it will automatically download the required AI models to your local user folder.)*

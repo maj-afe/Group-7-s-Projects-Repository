@@ -52,7 +52,11 @@ _INITIAL_PROMPT: str = (
 )
 
 # Where to cache the model weights
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+import sys
+if getattr(sys, 'frozen', False):
+    _PROJECT_ROOT = Path.home() / ".bug_dashboard"
+else:
+    _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _MODEL_CACHE_DIR = str(_PROJECT_ROOT / "models" / "whisper")
 
 
