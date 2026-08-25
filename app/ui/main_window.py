@@ -230,6 +230,18 @@ class MainWindow(QMainWindow):
             f"[Dashboard] Voice command: "
             f"{transcript} -> {command}"
         )
+        
+        # Execute UI-level commands
+        if command in ("start_calibration", "start_mouth_calibration", "reset_calibration"):
+            self.camera_thread.calibrate()
+        elif command == "enable_head_tracking":
+            self.camera_thread.set_cursor_control(True)
+        elif command == "disable_head_tracking":
+            self.camera_thread.set_cursor_control(False)
+        elif command == "emergency_stop":
+            self.pause_all()
+        elif command == "control_enabled":
+            self.start_all()
 
     # ==================================================
     # VOICE ERROR
