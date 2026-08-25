@@ -2,6 +2,8 @@
 
 _Shared Repository for Final Year project development and documentation._
 
+> [!NOTE]
+> 🎓 **Academic Research:** BUG is currently transitioning from an engineering prototype into an adaptive, multimodal research project. **Track our progress and thesis goals in the [RESEARCH_ROADMAP.md](file:///d:/Group-7-s-Projects-Repository/RESEARCH_ROADMAP.md)**.
 BUG is an accessible, hands-free browsing assistant designed to let users control their computer using facial movements and voice commands. It features a modern desktop UI built with PySide6 that seamlessly connects computer vision and speech recognition pipelines.
 
 ## 🛠️ Technology Stack
@@ -63,7 +65,7 @@ A sleek, dark-mode PySide6 interface designed specifically for accessibility. It
 
 ## 📊 System Architecture & Flowcharts
 
-The system consists of two primary asynchronous pipelines running simultaneously alongside the PySide6 main event loop.
+BUG implements an **Adaptive, Offline, Multimodal Control Architecture**. Rather than running face tracking and voice recognition as isolated input mechanisms, BUG arbitrates between modalities using a Multimodal Intent Manager, applying dynamic calibration and safety validations before executing actions.
 
 ### Overall System Flow
 
@@ -72,28 +74,27 @@ graph TD
     A[BUG Dashboard UI] --> B[System Controller]
     B --> C{Activate Pipelines}
 
-    subgraph Computer Vision Pipeline
+    subgraph Modality: Face Tracking
     C --> D[OpenCV Video Capture]
     D --> E[MediaPipe Face Landmarker]
-    E --> F{Face Detected?}
-    F -- Yes --> G[Calculate Nose Coordinates]
-    F -- Yes --> H[Calculate Mouth Aspect Ratio]
-    G --> I[PyAutoGUI Mouse Move]
-    H --> J{Mouth Open?}
-    J -- Yes --> K[PyAutoGUI Left Click]
+    E --> F[Adaptive Calibration & Smoothing]
+    F --> G[Cursor Tracking & Mouth Gestures]
     end
 
-    subgraph Voice Recognition Pipeline
-    C --> L[SoundDevice Audio Capture]
-    L --> M[WebRTC Audio Processing]
-    M --> N[Silero VAD]
-    N --> O{Speech Segmented?}
-    O -- Yes --> P[Faster-Whisper]
-    P --> Q[Text Normalization & Dedup]
-    Q --> R[RapidFuzz Matcher]
-    R --> S{Command Found?}
-    S -- Yes --> T[Execute PyAutoGUI / Subprocess]
+    subgraph Modality: Voice Recognition
+    C --> H[Microphone Capture]
+    H --> I[WebRTC & Silero VAD]
+    I --> J[Faster-Whisper Local ASR]
+    J --> K[Command Ontology & Correction]
     end
+
+    G --> L((Multimodal Intent Manager))
+    K --> L
+
+    L --> M{Safety Validation}
+    M -- Low Risk (e.g. Move/Scroll) --> N[Execute Action]
+    M -- High Risk (e.g. Close/Delete) --> O[Prompt User Confirmation]
+    O -- Confirmed --> N
 ```
 
 ### Voice Command Execution Flow
