@@ -1,0 +1,23 @@
+{
+  "blah blah test": "scroll_down",
+  "please": "click",
+  "scroll down": "scroll_down",
+  "product": "scroll_up",
+  "open you": "open_youtube",
+  "lake": "click",
+  "spoiler": "scroll_up",
+  "switch printer": "switch_window",
+  "switch vendor": "open_youtube",
+  "emergency staff": "emergency_stop",
+  "take": "click",
+  "florida": "scroll_down",
+  "scroll up": "scroll_up",
+  "us": "switch_window",
+  "brenda": "open_youtube",
+  "and my sister": "emergency_stop",
+  "lick": "click",
+  "for love": "scroll_up",
+  "we window": "switch_window",
+  "my sister": "emergency_stop",
+  "plus went up": "close_window"
+}

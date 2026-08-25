@@ -1,13 +1,17 @@
 # app/voice/command_handler.py
 
 import re
-import difflib
 import threading
 import time
 import webbrowser
 from urllib.parse import quote_plus
+import subprocess
 import pyautogui
 
+# Disable failsafe: Since BUG uses head tracking to move the mouse,
+# the cursor will naturally hit the corners of the screen. We cannot
+# have PyAutoGUI crashing the app every time this happens.
+pyautogui.FAILSAFE = False
 
 class CommandHandler:
     """
@@ -73,7 +77,8 @@ class CommandHandler:
             "refresh page", "reload page",
             # Tabs
             "new tab", "open new tab", "close tab", "next tab",
-            "previous tab", "prev tab",
+            "previous tab", "prev tab", "change tab", "change step",
+            "change that",
             # Zoom
             "zoom in", "zoom out", "reset zoom",
             "full screen", "exit fullscreen",
@@ -110,6 +115,7 @@ class CommandHandler:
             # System
             "save as", "open file", "new file",
             "open start menu", "open task manager", "lock computer",
+            "open notepad", "open note pad", "open calculator",
         ]
 
     # =========================================================
@@ -117,11 +123,39 @@ class CommandHandler:
     # =========================================================
 
     def normalize(self, text: str) -> str:
-        """Lowercase, strip punctuation, collapse whitespace."""
+        """Lowercase, strip punctuation, collapse whitespace, deduplicate."""
         text = text.lower().strip()
         text = re.sub(r"""[.,!?;:'"()\[\]{}<>]""", "", text)
         text = re.sub(r"\s+", " ", text)
-        return text.strip()
+        text = text.strip()
+        text = self._deduplicate(text)
+        return text
+
+    def _deduplicate(self, text: str) -> str:
+        """
+        Collapse Whisper's word-repetition artefacts.
+
+        Examples:
+            'copy copy'                    -> 'copy'
+            'open note pad open note pad'  -> 'open note pad'
+            'scroll down scroll down'      -> 'scroll down'
+            'open not bad ... open'        -> 'open not bad'  (partial tail)
+        """
+        words = text.split()
+        n = len(words)
+        if n < 2:
+            return text
+        # Try all unit lengths from 1 up to half the total word count
+        for unit_len in range(1, n // 2 + 1):
+            unit = words[:unit_len]
+            reps = n // unit_len
+            if unit * reps == words[:unit_len * reps]:
+                leftover = words[unit_len * reps:]
+                # Accept if no leftover OR if leftover is a prefix of the unit
+                # (handles e.g. 'abc abc abc ab' -> 'abc')
+                if not leftover or unit[:len(leftover)] == leftover:
+                    return " ".join(unit)
+        return text
 
     # =========================================================
     # COOLDOWN CHECK (keyed on COMMAND, not raw transcript)
@@ -146,29 +180,45 @@ class CommandHandler:
 
     def _fuzzy_match(self, text: str) -> str:
         """
-        Attempts to correct a multi-word transcript using fuzzy matching.
-        Single-word inputs are returned unchanged - they are too short
+        Attempts to correct a multi-word transcript using rapidfuzz.
+
+        Uses token_set_ratio which handles:
+        - Word order variation ("chrome open" → "open chrome")
+        - Extra filler words from Whisper
+        - Indian-English pronunciation variants
+
+        Single-word inputs are returned unchanged — they are too short
         and ambiguous for safe fuzzy correction.
         """
-        # Never fuzzy-match single words - too many false positives
+        # Never fuzzy-match single words — too many false positives
         if len(text.split()) < 2:
             return text
 
-        # Never fuzzy-match search/open queries - they contain arbitrary words
+        # Never fuzzy-match search/open queries — they contain arbitrary words
         if text.startswith("search"):
             return text
 
-        matches = difflib.get_close_matches(
-            text,
-            self._multi_word_commands,
-            n=1,
-            cutoff=0.75   # High cutoff = fewer false positives
-        )
-        if matches:
-            corrected = matches[0]
-            if corrected != text:
-                print(f"[Voice] Fuzzy corrected: '{text}' -> '{corrected}'")
-            return corrected
+        try:
+            from rapidfuzz import process as fz_process  # type: ignore[import]
+            from rapidfuzz import fuzz as fz_fuzz         # type: ignore[import]
+
+            result = fz_process.extractOne(
+                text,
+                self._multi_word_commands,
+                scorer=fz_fuzz.token_set_ratio,
+                score_cutoff=80,   # 0–100 scale; 80 ≈ high confidence
+            )
+
+            if result is not None:
+                corrected, score, _ = result
+                if corrected != text:
+                    print(f"[Voice] Fuzzy corrected: '{text}' → '{corrected}' ({score:.0f}%)")
+                return corrected
+
+        except ImportError:
+            # Graceful fallback: return text unchanged so CommandHandler
+            # can still attempt exact matching.
+            print("[Voice] rapidfuzz not installed — skipping fuzzy match")
 
         return text
 
@@ -341,7 +391,7 @@ class CommandHandler:
             return self._done("scroll_down", "scroll_down")
 
         if normalized in {
-            "scroll up", "page up",
+            "scroll up", "page up", "up",
             # Vosk misheard aliases for "scroll up"
             "roll up", "pull up", "hold up", "grow up",
         }:
@@ -393,7 +443,10 @@ class CommandHandler:
             pyautogui.hotkey("ctrl", "w")
             return self._done_if_ready("close_tab", normalized)
 
-        if normalized == "next tab":
+        if normalized in {
+            "next tab", "change tab", "change step", "change that",
+            "next step", "change type", "next",
+        }:
             pyautogui.hotkey("ctrl", "tab")
             return self._done_if_ready("next_tab", normalized)
 
@@ -433,11 +486,11 @@ class CommandHandler:
             pyautogui.hotkey("ctrl", "a")
             return self._done_if_ready("select_all", normalized)
 
-        if normalized == "copy":
+        if normalized in {"copy", "copy copy"}:
             pyautogui.hotkey("ctrl", "c")
             return self._done_if_ready("copy", normalized)
 
-        if normalized == "paste":
+        if normalized in {"paste", "paste paste"}:
             pyautogui.hotkey("ctrl", "v")
             return self._done_if_ready("paste", normalized)
 
@@ -742,7 +795,21 @@ class CommandHandler:
             pyautogui.hotkey("ctrl", "n")
             return self._done_if_ready("new_file", normalized)
 
-        if normalized == "open start menu":
+        if normalized in {
+            "open notepad", "open note pad",
+            "open not bad",    # Whisper mishear
+            "open note pet",   # Whisper mishear
+            "open your fat",   # Whisper mishear
+            "one not bad",     # Whisper mishear
+        }:
+            subprocess.Popen(["notepad.exe"])
+            return self._done_if_ready("open_notepad", normalized)
+
+        if normalized == "open calculator":
+            subprocess.Popen(["calc.exe"])
+            return self._done_if_ready("open_calculator", normalized)
+
+        if normalized in {"open start menu", "window"}:
             pyautogui.press("win")
             return self._done_if_ready("open_start_menu", normalized)
 

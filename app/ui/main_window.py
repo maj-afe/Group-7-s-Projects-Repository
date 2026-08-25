@@ -46,6 +46,9 @@ class MainWindow(QMainWindow):
 
         self.setup_connections()
 
+        # Start camera and voice automatically on app launch
+        self.start_all()
+
     # ==================================================
     # SIGNAL CONNECTIONS
     # ==================================================

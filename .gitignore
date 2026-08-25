@@ -25,3 +25,8 @@ dist/
 .idea/
 *.token/
 .aiapiv1ch/
+
+# Model Caches
+models/whisper/models--*
+models/whisper/blobs/
+models/whisper/snapshots/
