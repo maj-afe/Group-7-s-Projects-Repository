@@ -1,5 +1,8 @@
+
+
 # app/voice/command_handler.py
 
+import os  # ADDED: For file operations in app launcher
 import re
 import threading
 import time
@@ -270,6 +273,151 @@ class CommandHandler:
         if self.scroll_speed > 2:
             self.scroll_speed -= 2
             print(f"[Voice] Scroll speed: {self.scroll_speed}")
+
+    # =========================================================
+    # DYNAMIC APPLICATION LAUNCHER (NEW)
+    # =========================================================
+
+    def _get_installed_apps(self) -> dict:
+        """
+        Get installed applications from Windows Start Menu using PowerShell.
+        Returns a dictionary: {app_name_lower: (display_name, app_id)}
+        """
+        try:
+            import json
+            
+            # PowerShell command to get Start Apps
+            ps_command = """
+            $apps = Get-StartApps
+            $apps | ForEach-Object {
+                [PSCustomObject]@{
+                    Name = $_.Name
+                    AppId = $_.AppId
+                }
+            } | ConvertTo-Json -Compress
+            """
+            
+            result = subprocess.run(
+                ["powershell", "-Command", ps_command],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            
+            if result.returncode != 0:
+                print(f"[Voice] PowerShell error: {result.stderr}")
+                return {}
+            
+            # Parse the JSON output
+            if not result.stdout or result.stdout.strip() == "":
+                print("[Voice] No applications found")
+                return {}
+            
+            apps_data = json.loads(result.stdout)
+            
+            # Handle single app case (json.loads returns dict, not list)
+            if isinstance(apps_data, dict):
+                apps_data = [apps_data]
+            
+            # Build lookup dictionary
+            app_lookup = {}
+            for app in apps_data:
+                if isinstance(app, dict) and "Name" in app and "AppId" in app:
+                    name = app["Name"].lower()
+                    app_id = app["AppId"]
+                    display_name = app["Name"]
+                    app_lookup[name] = (display_name, app_id)
+            
+            print(f"[Voice] Loaded {len(app_lookup)} installed applications")
+            return app_lookup
+            
+        except subprocess.TimeoutExpired:
+            print("[Voice] PowerShell timeout while fetching applications")
+            return {}
+        except json.JSONDecodeError as e:
+            print(f"[Voice] Failed to parse application list: {e}")
+            return {}
+        except Exception as e:
+            print(f"[Voice] Error fetching applications: {e}")
+            return {}
+
+    def open_installed_app(self, app_name: str) -> bool:
+        """
+        Open an installed Windows application by name.
+        
+        Args:
+            app_name: Name of the application to open (case-insensitive)
+            
+        Returns:
+            bool: True if application was launched successfully, False otherwise
+        """
+        if not app_name or len(app_name.strip()) < 2:
+            return False
+            
+        app_name = app_name.strip()
+        app_lookup = self._get_installed_apps()
+        
+        if not app_lookup:
+            print(f"[Voice] Could not retrieve installed applications list")
+            return False
+        
+        # Step 1: Try exact match
+        exact_match = app_name.lower()
+        if exact_match in app_lookup:
+            display_name, app_id = app_lookup[exact_match]
+            try:
+                # Launch using shell:AppsFolder
+                subprocess.Popen(f'explorer.exe shell:AppsFolder\\{app_id}')
+                print(f"[Voice] Launched: {display_name}")
+                return True
+            except Exception as e:
+                print(f"[Voice] Failed to launch {display_name}: {e}")
+                return False
+        
+        # Step 2: Try partial match (app_name is contained in the application name)
+        partial_matches = []
+        for app_display_name, (display_name, app_id) in app_lookup.items():
+            if app_name.lower() in app_display_name or app_display_name in app_name.lower():
+                partial_matches.append((app_display_name, display_name, app_id))
+        
+        if partial_matches:
+            # Sort by relevance (shorter names first for better matching)
+            partial_matches.sort(key=lambda x: len(x[0]))
+            
+            # Try launching the best match
+            for app_key, display_name, app_id in partial_matches:
+                try:
+                    subprocess.Popen(f'explorer.exe shell:AppsFolder\\{app_id}')
+                    print(f"[Voice] Launched: {display_name}")
+                    return True
+                except Exception as e:
+                    print(f"[Voice] Failed to launch {display_name}: {e}")
+                    continue
+        
+        # Step 3: Try launching common executables directly (fallback for non-Start Menu apps)
+        # This handles apps that might not show up in Get-StartApps
+        common_paths = [
+            f"C:\\Program Files\\{app_name}\\{app_name}.exe",
+            f"C:\\Program Files (x86)\\{app_name}\\{app_name}.exe",
+            f"C:\\Program Files\\{app_name}",
+            f"C:\\Program Files (x86)\\{app_name}",
+        ]
+        
+        for path in common_paths:
+            try:
+                # Try to find .exe files in the directory
+                import glob
+                exe_files = glob.glob(f"{path}\\*.exe")
+                for exe in exe_files:
+                    if app_name.lower() in os.path.basename(exe).lower():
+                        subprocess.Popen([exe])
+                        print(f"[Voice] Launched: {os.path.basename(exe)}")
+                        return True
+            except Exception:
+                continue
+        
+        print(f"[Voice] Application not found: {app_name}")
+        return False
 
     # =========================================================
     # MAIN COMMAND PROCESSOR
@@ -697,7 +845,64 @@ class CommandHandler:
             webbrowser.open(_SITE_MAP[normalized])
             return self._done(site_key, site_key)
 
+        # ===========================================================
+        # DYNAMIC APPLICATION LAUNCHER (NEW)
+        # Must be checked before website commands but after exact site matches
+        # ===========================================================
+        
+        # Check for "open <app>", "launch <app>", "start <app>" patterns
+        # But only if it's NOT a known website command
+        app_launch_patterns = [
+            (r"^open\s+(.+)$", "open"),
+            (r"^launch\s+(.+)$", "launch"),
+            (r"^start\s+(.+)$", "start"),
+        ]
+        
+        for pattern, command_type in app_launch_patterns:
+            app_match = re.match(pattern, normalized)
+            if app_match:
+                app_name = app_match.group(1).strip()
+                
+                # Skip if it's a known website (to avoid launching apps when website is intended)
+                # Check against known website commands
+                known_sites = {
+                    "google", "youtube", "facebook", "twitter", "instagram", 
+                    "github", "reddit", "linkedin", "netflix", "amazon", "chat gpt",
+                    "chrome"  # chrome is a special case - launch app, not website
+                }
+                
+                # Check if this is a known website command (except chrome)
+                if app_name in known_sites and app_name != "chrome":
+                    # Let the website handler below process this
+                    break
+                
+                # For "open chrome", handle as app launch (not website)
+                if app_name == "chrome" or app_name == "google chrome":
+                    if self._is_on_cooldown("open_chrome_app"):
+                        return None
+                    success = self.open_installed_app("Google Chrome")
+                    if success:
+                        return self._done("open_chrome_app", "open_chrome_app")
+                    else:
+                        # If Chrome not found, fall back to opening Google
+                        webbrowser.open("https://www.google.com")
+                        return self._done("open_google_website", "open_google_website")
+                
+                # For other apps, try to launch
+                if self._is_on_cooldown(f"launch_{app_name}"):
+                    return None
+                
+                success = self.open_installed_app(app_name)
+                if success:
+                    return self._done(f"launch_{app_name}", f"launch_{app_name}")
+                else:
+                    # If app not found, we silently continue to allow other command types
+                    # This prevents "open notepad" from failing if Notepad isn't installed
+                    # and allows it to be handled by other handlers if possible
+                    pass
+
         # ---- Generic "open X" — only fires if X looks like a real domain ----
+        # AND if it wasn't already handled by the application launcher
         open_site_match = re.match(r"^open\s+(.+)$", normalized)
         if open_site_match:
             site = open_site_match.group(1).strip()
