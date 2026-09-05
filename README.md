@@ -172,3 +172,137 @@ If you want to package the application into a single `.exe` file that can be sha
    ```
 3. The standalone executable will be generated at `dist\BUG_Dashboard.exe`.
    *(Note: The executable is large (~400MB) because it bundles PyTorch and OpenCV. On its first run, it will automatically download the required AI models to your local user folder.)*
+
+
+## Dynamic Application Launcher 
+
+We've added a powerful new feature that makes BUG even more useful for hands-free computing:
+
+Open Any App with Your Voice: No more reaching for the mouse or keyboard to launch applications
+
+Works on Any Windows PC: Dynamically discovers installed apps - no hardcoded paths or configuration needed
+
+Smart & Safe: Only launches apps when you use open, launch, or start commands, preventing accidental launches
+
+Seamless Integration: Works alongside existing website commands - "open google" opens the website, while "open chrome" launches the Chrome application
+
+This feature transforms BUG from a browsing assistant into a complete hands-free computer control system!
+
+
+
+ ## Voice-Controlled Window Management 
+
+BUG now includes powerful Voice-Controlled Window Management that lets you control application windows using voice commands. Powered by Windows Win32 APIs via pywin32, this feature enables complete hands-free window management.
+
+Available Commands:
+
+Switch to an application window:
+
+"switch to chrome" → Brings Chrome window to foreground
+
+"switch to visual studio code" → Brings VS Code to foreground
+
+"switch to notepad" → Brings Notepad to foreground
+
+"switch to spotify" → Brings Spotify to foreground
+
+"switch to discord" → Brings Discord to foreground
+
+Minimize specific windows:
+
+"minimize chrome" → Minimizes Chrome window
+
+"minimize visual studio code" → Minimizes VS Code
+
+"minimize notepad" → Minimizes Notepad
+
+Maximize specific windows:
+
+"maximize chrome" → Maximizes Chrome window
+
+"maximize visual studio code" → Maximizes VS Code
+
+"maximize notepad" → Maximizes Notepad
+
+Move active window:
+
+"move window left" → Moves active window 100px left
+
+"move window right" → Moves active window 100px right
+
+"move window up" → Moves active window 100px up
+
+"move window down" → Moves active window 100px down
+
+Close active window:
+
+"close this window" → Closes the currently active window
+
+
+
+##  GUI Power Control
+BUG now includes a Graphical Confirmation System for power commands, replacing unreliable voice-based confirmation with a safe, visual dialog box.
+
+Why GUI Confirmation?
+
+Whisper sometimes misrecognizes "yes"/"no" from normal speech
+
+Random transcripts like "set down computer", "turn down computer" could trigger unwanted actions
+
+GUI confirmation is safer, more reliable, and user-friendly
+
+Available Commands:
+
+Command	Action	Confirmation
+"lock computer"	Locks Windows	✅ GUI Popup
+"sleep computer"	Puts PC to sleep	✅ GUI Popup
+"restart computer"	Restarts PC	✅ GUI Popup
+"shutdown computer"	Shuts down PC	✅ GUI Popup
+Confirmation Flow:
+
+text
+User: "restart computer"
+                    ↓
+┌──────────────────────────────────────────────┐
+│             Confirm Restart                   │
+├──────────────────────────────────────────────┤
+│                                              │
+│  Are you sure you want to restart the        │
+│  computer?                                   │
+│                                              │
+│        [ YES ]          [ NO ]              │
+│                                              │
+└──────────────────────────────────────────────┘
+                    ↓
+        ┌───────────┴───────────┐
+        │                       │
+        ▼                       ▼
+   Click YES               Click NO
+        │                       │
+        ▼                       ▼
+   Action Executes         Cancelled
+   (Restart/Shutdown)      (Do Nothing)
+Technical Implementation:
+
+Uses Qt Signals for thread-safe GUI communication
+
+Voice processing runs in background thread, GUI on main thread
+
+QMessageBox for professional, consistent dialog
+
+Modal dialog prevents accidental actions
+
+Clear error handling and logging
+
+Safety Features:
+
+✅ No voice confirmation (eliminates Whisper misrecognition)
+
+✅ Graphical YES/NO buttons only
+
+✅ Modal dialog (must click to continue)
+
+✅ Dialog appears on top of all windows
+
+✅ Emergency stop still works
+

@@ -10,3 +10,5 @@ faster-whisper
 rapidfuzz
 pytest
 python-dotenv
+pywin32
+psutil

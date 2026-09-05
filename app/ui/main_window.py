@@ -1,10 +1,18 @@
-from PySide6.QtWidgets import QMainWindow
+
+
+# app/ui/main_window.py
+
+from PySide6.QtWidgets import QMainWindow, QMessageBox
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap
 
 from app.ui.dashboard import DashboardWidget
 from app.voice.voice_assist import VoiceAssistant
 from app.camera.face_cursor_windows_varient import CameraThread
+
+# ADDED: Signal bridge and system controller
+from app.system.signal_bridge import SignalBridge
+from app.system.system_controller import SystemController
 
 
 class MainWindow(QMainWindow):
@@ -39,6 +47,12 @@ class MainWindow(QMainWindow):
         self.voice_assistant = VoiceAssistant()
 
         self.camera_thread = CameraThread()
+
+        # ==========================================
+        # SYSTEM POWER CONTROL (ADDED)
+        # ==========================================
+
+        self.system_controller = SystemController()
 
         # ==========================================
         # SIGNAL CONNECTIONS
@@ -102,6 +116,85 @@ class MainWindow(QMainWindow):
         self.camera_thread.frame_ready.connect(
             self.update_camera_frame
         )
+
+        # ------------------------------------------
+        # Power Confirmation Signal (ADDED)
+        # ------------------------------------------
+
+        signal_bridge = SignalBridge()
+        signal_bridge.request_power_confirmation.connect(
+            self._show_power_confirmation_dialog
+        )
+
+    # ==================================================
+    # POWER CONFIRMATION DIALOG (ADDED)
+    # ==================================================
+
+    def _show_power_confirmation_dialog(self, action: str):
+        """
+        Show the power confirmation dialog on the GUI thread.
+        This method is called via Qt signal from the background thread.
+        """
+        action_map = {
+            "lock": {
+                "title": "Confirm Lock",
+                "message": "Are you sure you want to lock the computer?"
+            },
+            "sleep": {
+                "title": "Confirm Sleep",
+                "message": "Are you sure you want to put the computer to sleep?"
+            },
+            "restart": {
+                "title": "Confirm Restart",
+                "message": "Are you sure you want to restart the computer?"
+            },
+            "shutdown": {
+                "title": "Confirm Shutdown",
+                "message": "Are you sure you want to shut down the computer?"
+            }
+        }
+
+        if action not in action_map:
+            print(f"[GUI] Unknown power action: {action}")
+            return
+
+        info = action_map[action]
+
+        try:
+            # Create the confirmation dialog
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle(info["title"])
+            msg_box.setText(info["message"])
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            msg_box.setDefaultButton(QMessageBox.No)
+
+            # Show dialog and get result
+            result = msg_box.exec()
+
+            if result == QMessageBox.Yes:
+                print(f"[GUI] User confirmed: {action}")
+                # Execute the action
+                if action == "lock":
+                    success = self.system_controller.lock_computer()
+                elif action == "sleep":
+                    success = self.system_controller.sleep_computer()
+                elif action == "restart":
+                    success = self.system_controller.restart_computer()
+                elif action == "shutdown":
+                    success = self.system_controller.shutdown_computer()
+                else:
+                    return
+
+                if success:
+                    print(f"[GUI] {action} executed successfully")
+                else:
+                    print(f"[GUI] Failed to {action}: {self.system_controller.get_last_error()}")
+            else:
+                print(f"[GUI] User cancelled: {action}")
+
+        except Exception as e:
+            print(f"[GUI] Error showing power dialog: {e}")
 
     # ==================================================
     # START ALL

@@ -1,5 +1,3 @@
-
-
 # app/voice/command_handler.py
 
 import os  # ADDED: For file operations in app launcher
@@ -10,6 +8,15 @@ import webbrowser
 from urllib.parse import quote_plus
 import subprocess
 import pyautogui
+
+# ADDED: Window management
+from app.system.window_manager import WindowManager
+
+# ADDED: System power control
+from app.system.system_controller import SystemController
+
+# ADDED: Signal bridge for thread-safe GUI operations
+from app.system.signal_bridge import SignalBridge
 
 # Disable failsafe: Since BUG uses head tracking to move the mouse,
 # the cursor will naturally hit the corners of the screen. We cannot
@@ -60,6 +67,15 @@ class CommandHandler:
         # phrased or which misheard alias triggered it.
         self._last_exec_time: dict = {}
         self._cooldown_seconds = 1.5
+
+        # ADDED: Window manager for voice-controlled window management
+        self.window_manager = WindowManager()
+
+        # ADDED: System controller for power operations
+        self.system_controller = SystemController()
+
+        # ADDED: Signal bridge for thread-safe GUI communication
+        self.signal_bridge = SignalBridge()
 
         # Pre-build the multi-word command list for fuzzy matching.
         # IMPORTANT: single-word commands are intentionally excluded
@@ -119,6 +135,18 @@ class CommandHandler:
             "save as", "open file", "new file",
             "open start menu", "open task manager", "lock computer",
             "open notepad", "open note pad", "open calculator",
+            # Window Management (ADDED)
+            "switch to chrome", "switch to visual studio", "switch to code",
+            "switch to notepad", "switch to spotify", "switch to discord",
+            "switch to vs code", "switch to vscode",
+            "minimize chrome", "minimize visual studio", "minimize notepad",
+            "minimize spotify", "minimize discord",
+            "maximize chrome", "maximize visual studio", "maximize notepad",
+            "move window left", "move window right", 
+            "move window up", "move window down",
+            "close this window",
+            # System Power Control (ADDED)
+            "lock computer", "sleep computer", "restart computer", "shutdown computer",
         ]
 
     # =========================================================
@@ -275,7 +303,7 @@ class CommandHandler:
             print(f"[Voice] Scroll speed: {self.scroll_speed}")
 
     # =========================================================
-    # DYNAMIC APPLICATION LAUNCHER (NEW)
+    # DYNAMIC APPLICATION LAUNCHER
     # =========================================================
 
     def _get_installed_apps(self) -> dict:
@@ -418,6 +446,19 @@ class CommandHandler:
         
         print(f"[Voice] Application not found: {app_name}")
         return False
+
+    # =========================================================
+    # POWER COMMAND HANDLING (using Signals)
+    # =========================================================
+
+    def _trigger_power_confirmation(self, action: str):
+        """
+        Trigger the power confirmation dialog via Qt signal.
+        This is thread-safe and will be executed on the GUI thread.
+        """
+        # Emit the signal (this will be received by the main window on GUI thread)
+        self.signal_bridge.request_power_confirmation.emit(action)
+        print(f"[Voice] Power confirmation requested: {action}")
 
     # =========================================================
     # MAIN COMMAND PROCESSOR
@@ -846,7 +887,7 @@ class CommandHandler:
             return self._done(site_key, site_key)
 
         # ===========================================================
-        # DYNAMIC APPLICATION LAUNCHER (NEW)
+        # DYNAMIC APPLICATION LAUNCHER
         # Must be checked before website commands but after exact site matches
         # ===========================================================
         
@@ -965,7 +1006,7 @@ class CommandHandler:
             return self._done_if_ready("reset_calibration", normalized)
 
         # ===========================================================
-        # CONFIRMATION SHORTCUTS
+        # CONFIRMATION SHORTCUTS (Existing - keep unchanged)
         # ===========================================================
 
         if normalized in {"yes", "yep", "yeah"}:
@@ -1022,12 +1063,120 @@ class CommandHandler:
             pyautogui.hotkey("ctrl", "shift", "esc")
             return self._done_if_ready("open_task_manager", normalized)
 
-        if normalized == "lock computer":
-            pyautogui.hotkey("win", "l")
-            return self._done_if_ready("lock_computer", normalized)
+        # ===========================================================
+        # SYSTEM POWER CONTROL (NEW - GUI CONFIRMATION via Signals)
+        # ===========================================================
 
-        if normalized == "help":
-            return self._done_if_ready("help", normalized)
+        # ---- Lock Computer ----
+        if normalized == "lock computer":
+            if self._is_on_cooldown("lock_computer"):
+                return None
+            
+            # Trigger GUI confirmation via signal
+            self._trigger_power_confirmation("lock")
+            return self._done("lock_computer", "lock_computer")
+
+        # ---- Sleep Computer ----
+        if normalized == "sleep computer":
+            if self._is_on_cooldown("sleep_computer"):
+                return None
+            
+            # Trigger GUI confirmation via signal
+            self._trigger_power_confirmation("sleep")
+            return self._done("sleep_computer", "sleep_computer")
+
+        # ---- Restart Computer ----
+        if normalized == "restart computer":
+            if self._is_on_cooldown("restart_computer"):
+                return None
+            
+            # Trigger GUI confirmation via signal
+            self._trigger_power_confirmation("restart")
+            return self._done("restart_computer", "restart_computer")
+
+        # ---- Shutdown Computer ----
+        if normalized == "shutdown computer":
+            if self._is_on_cooldown("shutdown_computer"):
+                return None
+            
+            # Trigger GUI confirmation via signal
+            self._trigger_power_confirmation("shutdown")
+            return self._done("shutdown_computer", "shutdown_computer")
+
+        # ===========================================================
+        # WINDOW MANAGEMENT
+        # ===========================================================
+        
+        # ---- Switch to application window ----
+        switch_match = re.match(r"^switch to\s+(.+)$", normalized)
+        if switch_match:
+            app_name = switch_match.group(1).strip()
+            if self._is_on_cooldown(f"switch_to_{app_name}"):
+                return None
+            
+            if self.window_manager.switch_to_window(app_name):
+                return self._done(f"switch_to_{app_name}", f"switch_to_{app_name}")
+            else:
+                print(f"[Voice] {self.window_manager.get_last_error()}")
+                return f"window_not_found: {app_name}"
+        
+        # ---- Minimize specific window ----
+        minimize_match = re.match(r"^minimize\s+(.+)$", normalized)
+        if minimize_match:
+            app_name = minimize_match.group(1).strip()
+            # Skip if it's a system command
+            if app_name.lower() in {"window", "all"}:
+                pass
+            else:
+                if self._is_on_cooldown(f"minimize_{app_name}"):
+                    return None
+                
+                if self.window_manager.minimize_window(app_name):
+                    return self._done(f"minimize_{app_name}", f"minimize_{app_name}")
+                else:
+                    print(f"[Voice] {self.window_manager.get_last_error()}")
+                    return f"window_not_found: {app_name}"
+        
+        # ---- Maximize specific window ----
+        maximize_match = re.match(r"^maximize\s+(.+)$", normalized)
+        if maximize_match:
+            app_name = maximize_match.group(1).strip()
+            # Skip if it's a system command
+            if app_name.lower() in {"window", "all"}:
+                pass
+            else:
+                if self._is_on_cooldown(f"maximize_{app_name}"):
+                    return None
+                
+                if self.window_manager.maximize_window(app_name):
+                    return self._done(f"maximize_{app_name}", f"maximize_{app_name}")
+                else:
+                    print(f"[Voice] {self.window_manager.get_last_error()}")
+                    return f"window_not_found: {app_name}"
+        
+        # ---- Move active window ----
+        move_match = re.match(r"^move window\s+(left|right|up|down)$", normalized)
+        if move_match:
+            direction = move_match.group(1)
+            if self._is_on_cooldown(f"move_window_{direction}"):
+                return None
+            
+            if self.window_manager.move_active_window(direction):
+                return self._done(f"move_window_{direction}", f"move_window_{direction}")
+            else:
+                print(f"[Voice] {self.window_manager.get_last_error()}")
+                return f"move_window_failed: {direction}"
+        
+        # ---- Close active window ----
+        if normalized in {"close this window", "close window"}:
+            if self._is_on_cooldown("close_active_window"):
+                return None
+            
+            if self.window_manager.close_active_window():
+                return self._done("close_active_window", "close_active_window")
+            else:
+                print(f"[Voice] {self.window_manager.get_last_error()}")
+                return "close_window_failed"
 
         # ===========================================================
         # UNKNOWN COMMAND
