@@ -148,10 +148,12 @@ class CameraThread(QThread):
                 cv2.circle(rgb_frame, (int(upper_lip.x * w), int(upper_lip.y * h)), 4, lip_color, -1)
                 cv2.circle(rgb_frame, (int(lower_lip.x * w), int(lower_lip.y * h)), 4, lip_color, -1)
 
-            # Convert to QImage
+            # Convert to QImage safely
             h, w, ch = rgb_frame.shape
+            # Extract to bytes and keep a reference to prevent garbage collection before copy
+            frame_bytes = rgb_frame.tobytes()
             bytes_per_line = ch * w
-            q_img = QImage(rgb_frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+            q_img = QImage(frame_bytes, w, h, bytes_per_line, QImage.Format_RGB888)
             
             self.frame_ready.emit(q_img.copy())
 

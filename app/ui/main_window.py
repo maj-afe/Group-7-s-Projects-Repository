@@ -14,6 +14,8 @@ from app.camera.face_cursor_windows_varient import CameraThread
 from app.system.signal_bridge import SignalBridge
 from app.system.system_controller import SystemController
 
+from app.ui.voice_overlay import VoiceOverlay
+
 
 class MainWindow(QMainWindow):
 
@@ -39,6 +41,12 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(
             self.dashboard
         )
+
+        # ==========================================
+        # VOICE OVERLAY
+        # ==========================================
+
+        self.voice_overlay = VoiceOverlay()
 
         # ==========================================
         # THREADS / CONTROLLERS
@@ -324,6 +332,9 @@ class MainWindow(QMainWindow):
             f"{transcript} -> {command}"
         )
         
+        # Show overlay notification
+        self.voice_overlay.show_message(transcript)
+        
         # Execute UI-level commands
         if command in ("start_calibration", "start_mouth_calibration", "reset_calibration"):
             self.camera_thread.calibrate()
@@ -426,6 +437,9 @@ class MainWindow(QMainWindow):
         print(
             "[MainWindow] Closing application..."
         )
+
+        # Close overlay
+        self.voice_overlay.close()
 
         # Stop camera
         if self.camera_thread.isRunning():
