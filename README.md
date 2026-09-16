@@ -1,23 +1,23 @@
 # Face Gesture Assistant
 
 > _Shared Repository for Final Year Project development and documentation._
-> ðŸŽ“ **Academic Research:** Face Gesture Assistant is transitioning from an engineering prototype into an adaptive, multimodal research project. Track our progress in [RESEARCH_ROADMAP.md](./RESEARCH_ROADMAP.md).
+> 🎓 **Academic Research:** Face Gesture Assistant is transitioning from an engineering prototype into an adaptive, multimodal research project. Track our progress in [RESEARCH_ROADMAP.md](./RESEARCH_ROADMAP.md).
 
 **Face Gesture Assistant** is an accessible, fully **offline**, hands-free desktop control system that allows users to operate their computer entirely through **facial movements** and **voice commands**. It is built for individuals with motor disabilities or anyone who needs a completely touchless computing experience.
 
 ---
 
-## ðŸ“‘ Table of Contents
+## 📑 Table of Contents
 
 1. [Project Overview](#-project-overview)
 2. [Key Features](#-key-features)
-3. [Technology Stack](#ï¸-technology-stack)
+3. [Technology Stack](#️-technology-stack)
 4. [System Architecture](#-system-architecture)
 5. [Module Breakdown](#-module-breakdown)
-6. [Voice Commands Reference](#ï¸-voice-commands-reference)
-7. [GUI Features](#ï¸-gui-features)
+6. [Voice Commands Reference](#️-voice-commands-reference)
+7. [GUI Features](#️-gui-features)
 8. [OS Compatibility](#-os-compatibility)
-9. [Setup & Installation](#ï¸-setup--installation)
+9. [Setup & Installation](#️-setup--installation)
 10. [Running the Application](#-running-the-application)
 11. [Building a Standalone Executable](#-building-a-standalone-executable)
 12. [Testing](#-testing)
@@ -27,39 +27,39 @@
 
 ---
 
-## ðŸŽ¯ Project Overview
+## 🎯 Project Overview
 
 Face Gesture Assistant (FGA) investigates an **adaptive, offline, multimodal control architecture** that:
 
 - Personalizes interaction parameters to each user's motor behavior
 - Arbitrates intelligently between facial gesture and voice inputs
 - Measures accuracy, latency, false activations, and resource consumption
-- Runs entirely on local hardware â€” **no cloud, no internet required**
+- Runs entirely on local hardware — **no cloud, no internet required**
 
 The system is being developed as a **Final Year Engineering Project / Research Thesis** by Group 7.
 
 ---
 
-## âœ¨ Key Features
+## ✨ Key Features
 
 | Feature | Description |
 |---|---|
-| ðŸŽ¥ **Face-Tracking Mouse** | Moves the cursor in real-time by tracking your nose bridge via webcam |
-| ðŸ‘„ **Mouth-Click System** | Opens mouth to left-click â€” replaces a physical mouse button |
-| ðŸ—£ï¸ **Offline Voice Control** | Full voice command pipeline with noise cancellation, VAD, and local Whisper ASR |
-| ðŸªŸ **Window Management** | Switch, minimize, maximize, move, or close windows entirely by voice |
-| ðŸ“± **Dynamic App Launcher** | Launch any installed Windows application by voice â€” no hardcoded paths |
-| ðŸ”’ **GUI Power Controls** | Lock, sleep, restart, or shutdown the PC with safe graphical confirmation dialogs |
-| ðŸ“ **Voice Dictation Mode** | Transcribe speech directly as keyboard input into any application |
-| ðŸ†˜ **Emergency Stop** | Instantly halt all automation with a single voice command |
-| ðŸŽ›ï¸ **Modern Dashboard** | Sleek dark-mode PySide6 UI with status indicators and quick controls |
-| ðŸ”§ **Adaptive Calibration** | Personalize head-tracking sensitivity and mouth-click threshold per user |
+| 🎥 **Face-Tracking Mouse** | Moves the cursor in real-time by tracking your nose bridge via webcam |
+| 👄 **Mouth-Click System** | Opens mouth to left-click — replaces a physical mouse button |
+| 🗣️ **Offline Voice Control** | Full voice command pipeline with noise cancellation, VAD, and local Whisper ASR |
+| 🪟 **Window Management** | Switch, minimize, maximize, move, or close windows entirely by voice |
+| 📱 **Dynamic App Launcher** | Launch any installed Windows application by voice — no hardcoded paths |
+| 🔒 **GUI Power Controls** | Lock, sleep, restart, or shutdown the PC with safe graphical confirmation dialogs |
+| 📝 **Voice Dictation Mode** | Transcribe speech directly as keyboard input into any application |
+| 🆘 **Emergency Stop** | Instantly halt all automation with a single voice command |
+| 🎛️ **Modern Dashboard** | Sleek dark-mode PySide6 UI with status indicators and quick controls |
+| 🔧 **Adaptive Calibration** | Personalize head-tracking sensitivity and mouth-click threshold per user |
 
 ---
 
-## ðŸ› ï¸ Technology Stack
+## 🛠️ Technology Stack
 
-Face Gesture Assistant is built using modern, efficient libraries tailored for real-time processing and offline-first operation:
+FGA is built using modern, efficient libraries tailored for real-time processing and offline-first operation:
 
 ### Core Language
 - **Python 3.10+**
@@ -67,29 +67,29 @@ Face Gesture Assistant is built using modern, efficient libraries tailored for r
 ### User Interface
 | Library | Purpose |
 |---|---|
-| **PySide6** | Qt-based cross-platform GUI â€” dark-mode dashboard, dialogs, overlays |
+| **PySide6** | Qt-based cross-platform GUI — dark-mode dashboard, dialogs, overlays |
 
 ### Computer Vision
 | Library | Purpose |
 |---|---|
 | **OpenCV** (`opencv-python`, `opencv-contrib-python`) | Webcam capture and video frame processing |
-| **MediaPipe** | Google's ML framework â€” Face Landmark detection (468 landmarks) for nose tracking and mouth state |
+| **MediaPipe** | Google's ML framework — Face Landmark detection (468 landmarks) for nose tracking and mouth state |
 
 ### Speech & Audio
 | Library | Purpose |
 |---|---|
 | **SoundDevice** | Low-latency microphone audio capture |
-| **pywebrtc-audio** | WebRTC APM â€” noise suppression, echo cancellation, automatic gain control |
-| **Silero VAD** | Neural network Voice Activity Detector â€” isolates speech segments precisely |
-| **Faster-Whisper** | Fully offline ASR using quantized INT8 Whisper models â€” fast, accurate transcription |
-| **RapidFuzz** | Fuzzy string matching â€” maps imperfect transcripts to known commands |
+| **pywebrtc-audio** | WebRTC APM — noise suppression, echo cancellation, automatic gain control |
+| **Silero VAD** | Neural network Voice Activity Detector — isolates speech segments precisely |
+| **Faster-Whisper** | Fully offline ASR using quantized INT8 Whisper models — fast, accurate transcription |
+| **RapidFuzz** | Fuzzy string matching — maps imperfect transcripts to known commands |
 
 ### System Automation
 | Library | Purpose |
 |---|---|
 | **PyAutoGUI** | Mouse movement, clicks, keyboard strokes simulation |
 | **pynput** | Additional input listening and low-level input control |
-| **pywin32** | Windows Win32 APIs â€” window management (focus, minimize, maximize, move) |
+| **pywin32** | Windows Win32 APIs — window management (focus, minimize, maximize, move) |
 | **psutil** | System process information for app detection |
 
 ### Dev & Testing
@@ -100,7 +100,7 @@ Face Gesture Assistant is built using modern, efficient libraries tailored for r
 
 ---
 
-## ðŸ“Š System Architecture
+## 📊 System Architecture
 
 Face Gesture Assistant implements an **Adaptive, Offline, Multimodal Control Architecture**. Rather than running face tracking and voice recognition as completely independent silos, FGA uses a **Multimodal Intent Manager** to arbitrate between modalities, apply dynamic calibration, and run safety validations before executing any action.
 
@@ -172,63 +172,63 @@ sequenceDiagram
     Calibration->>Calibration: Adaptive smoothing + range normalization
     Calibration->>Cursor: Translated (x, y) screen coordinates
     Cursor->>Cursor: pyautogui.moveTo(x, y)
-    MediaPipe->>Cursor: Mouth Aspect Ratio (MAR) > threshold â†’ click()
+    MediaPipe->>Cursor: Mouth Aspect Ratio (MAR) > threshold -> click()
 ```
 
 ---
 
-## ðŸ—‚ï¸ Module Breakdown
+## 🗂️ Module Breakdown
 
 The `app/` directory is organized into focused, single-responsibility modules:
 
 ```
 app/
-â”œâ”€â”€ main.py                          # Entry point â€” launches the Qt application
-â”œâ”€â”€ camera/                          # Face tracking & computer vision
-â”‚   â”œâ”€â”€ camera.py                        # Webcam capture manager
-â”‚   â”œâ”€â”€ face_tracker.py                  # High-level face tracking coordinator
-â”‚   â”œâ”€â”€ face_cursor_windows_varient.py   # Windows-optimized cursor mapping
-â”‚   â”œâ”€â”€ face_cursor_wayland.py           # Wayland (Linux) cursor mapping
-â”‚   â”œâ”€â”€ facecursor.py                    # Core cursor translation logic
-â”‚   â”œâ”€â”€ EXP.py / EXPs.py                # Experimental calibration scripts
-â”‚   â””â”€â”€ face_landmarker.task            # Bundled MediaPipe model file (~3.6 MB)
-â”œâ”€â”€ voice/                           # Full speech recognition pipeline
-â”‚   â”œâ”€â”€ audio_capture.py                 # Microphone stream management (SoundDevice)
-â”‚   â”œâ”€â”€ audio_processor.py               # WebRTC APM preprocessing
-â”‚   â”œâ”€â”€ vad.py                           # Silero VAD â€” speech segmentation
-â”‚   â”œâ”€â”€ whisper_engine.py                # Faster-Whisper transcription engine
-â”‚   â”œâ”€â”€ speech_recognition.py            # Orchestrates audio â†’ VAD â†’ Whisper
-â”‚   â”œâ”€â”€ command_handler.py               # Maps transcripts to actions (RapidFuzz)
-â”‚   â””â”€â”€ voice_assist.py                  # High-level voice assistant controller
-â”œâ”€â”€ gestures/                        # Gesture detection layer
-â”‚   â”œâ”€â”€ gesture_detector.py              # Unified gesture event dispatcher
-â”‚   â”œâ”€â”€ head_tracking.py                 # Head movement â†’ cursor position
-â”‚   â””â”€â”€ mouth_detection.py               # Mouth Aspect Ratio â†’ click events
-â”œâ”€â”€ control/                         # System automation layer
-â”‚   â”œâ”€â”€ mouse_control.py                 # Mouse movement and click actions
-â”‚   â”œâ”€â”€ keyboard_control.py              # Keyboard simulation and text input
-â”‚   â””â”€â”€ window_control.py               # Window focus, minimize, maximize (pywin32)
-â”œâ”€â”€ core/                            # Application core & settings
-â”‚   â”œâ”€â”€ command_engine.py                # Central command dispatcher
-â”‚   â””â”€â”€ settings.py                      # Global config and user preferences
-â”œâ”€â”€ ui/                              # PySide6 user interface
-â”‚   â”œâ”€â”€ main_window.py                   # Primary dashboard window
-â”‚   â”œâ”€â”€ dashboard.py                     # Dashboard widget layout
-â”‚   â”œâ”€â”€ voice_overlay.py                 # Live voice transcript HUD overlay
-â”‚   â”œâ”€â”€ calibration_ui.py                # Calibration wizard UI
-â”‚   â”œâ”€â”€ learn_dialog.py                  # Command learning / help dialog
-â”‚   â””â”€â”€ wizard_dialog.py                 # First-run setup wizard
-â”œâ”€â”€ system/                          # System-level integrations
-â””â”€â”€ utils/                           # Shared utilities and helpers
+├── main.py                          # Entry point — launches the Qt application
+├── camera/                          # Face tracking & computer vision
+│   ├── camera.py                        # Webcam capture manager
+│   ├── face_tracker.py                  # High-level face tracking coordinator
+│   ├── face_cursor_windows_varient.py   # Windows-optimized cursor mapping
+│   ├── face_cursor_wayland.py           # Wayland (Linux) cursor mapping
+│   ├── facecursor.py                    # Core cursor translation logic
+│   ├── EXP.py / EXPs.py                # Experimental calibration scripts
+│   └── face_landmarker.task            # Bundled MediaPipe model file (~3.6 MB)
+├── voice/                           # Full speech recognition pipeline
+│   ├── audio_capture.py                 # Microphone stream management (SoundDevice)
+│   ├── audio_processor.py               # WebRTC APM preprocessing
+│   ├── vad.py                           # Silero VAD — speech segmentation
+│   ├── whisper_engine.py                # Faster-Whisper transcription engine
+│   ├── speech_recognition.py            # Orchestrates audio to VAD to Whisper
+│   ├── command_handler.py               # Maps transcripts to actions (RapidFuzz)
+│   └── voice_assist.py                  # High-level voice assistant controller
+├── gestures/                        # Gesture detection layer
+│   ├── gesture_detector.py              # Unified gesture event dispatcher
+│   ├── head_tracking.py                 # Head movement to cursor position
+│   └── mouth_detection.py               # Mouth Aspect Ratio to click events
+├── control/                         # System automation layer
+│   ├── mouse_control.py                 # Mouse movement and click actions
+│   ├── keyboard_control.py              # Keyboard simulation and text input
+│   └── window_control.py               # Window focus, minimize, maximize (pywin32)
+├── core/                            # Application core & settings
+│   ├── command_engine.py                # Central command dispatcher
+│   └── settings.py                      # Global config and user preferences
+├── ui/                              # PySide6 user interface
+│   ├── main_window.py                   # Primary dashboard window
+│   ├── dashboard.py                     # Dashboard widget layout
+│   ├── voice_overlay.py                 # Live voice transcript HUD overlay
+│   ├── calibration_ui.py                # Calibration wizard UI
+│   ├── learn_dialog.py                  # Command learning / help dialog
+│   └── wizard_dialog.py                 # First-run setup wizard
+├── system/                          # System-level integrations
+└── utils/                           # Shared utilities and helpers
 ```
 
 ---
 
-## ðŸ—£ï¸ Voice Commands Reference
+## 🗣️ Voice Commands Reference
 
 Face Gesture Assistant supports a comprehensive set of voice commands covering every aspect of desktop control:
 
-### ðŸ–±ï¸ Mouse & Scrolling
+### 🖱️ Mouse & Scrolling
 
 | Command | Action |
 |---|---|
@@ -240,7 +240,7 @@ Face Gesture Assistant supports a comprehensive set of voice commands covering e
 | `"scroll faster"` / `"scroll slower"` | Adjust scroll speed |
 | `"stop scrolling"` | Halt auto-scroll |
 
-### ðŸŒ Browser & Tabs
+### 🌐 Browser & Tabs
 
 | Command | Action |
 |---|---|
@@ -250,14 +250,14 @@ Face Gesture Assistant supports a comprehensive set of voice commands covering e
 | `"next tab"` / `"previous tab"` | Tab switching |
 | `"history"` / `"downloads"` / `"bookmarks"` | Open browser panels |
 
-### ðŸ” Zoom
+### 🔍 Zoom
 
 | Command | Action |
 |---|---|
 | `"zoom in"` / `"zoom out"` | Browser zoom |
 | `"reset zoom"` | Reset to 100% |
 
-### ðŸŒ Websites & Search
+### 🌍 Websites & Search
 
 | Command | Action |
 |---|---|
@@ -265,9 +265,9 @@ Face Gesture Assistant supports a comprehensive set of voice commands covering e
 | `"open chrome"`, `"open notepad"`, `"open calculator"` | Launch application |
 | `"search [query]"` | Google search for the query |
 
-> **Dynamic App Launcher:** Beyond hardcoded apps, BUG dynamically discovers any installed Windows application. Say `"open [app name]"` for any installed program â€” no configuration needed. Safely gated behind `open`, `launch`, or `start` keywords to prevent accidental launches.
+> **Dynamic App Launcher:** Beyond hardcoded apps, Face Gesture Assistant dynamically discovers any installed Windows application. Say `"open [app name]"` for any installed program — no configuration needed. Safely gated behind `open`, `launch`, or `start` keywords to prevent accidental launches.
 
-### ðŸ“‹ Text & Clipboard
+### 📋 Text & Clipboard
 
 | Command | Action |
 |---|---|
@@ -278,7 +278,7 @@ Face Gesture Assistant supports a comprehensive set of voice commands covering e
 | `"select next word"` / `"select previous word"` | Word selection |
 | `"start of line"` / `"end of line"` | Line navigation |
 
-### âŒ¨ï¸ Keyboard Keys
+### ⌨️ Keyboard Keys
 
 | Command | Action |
 |---|---|
@@ -286,7 +286,7 @@ Face Gesture Assistant supports a comprehensive set of voice commands covering e
 | `"backspace"` | Delete character |
 | `"yes"` / `"no"` / `"cancel"` | Confirmation responses |
 
-### ðŸªŸ Window Management
+### 🪟 Window Management
 
 | Command | Action |
 |---|---|
@@ -297,19 +297,19 @@ Face Gesture Assistant supports a comprehensive set of voice commands covering e
 | `"switch window"` | Alt+Tab |
 | `"fullscreen"` | Toggle fullscreen |
 
-### âš¡ System & Power
+### ⚡ System & Power
 
 | Command | Action | Confirmation |
 |---|---|---|
-| `"lock computer"` | Lock Windows session | âœ… GUI popup |
-| `"sleep computer"` | Put PC to sleep | âœ… GUI popup |
-| `"restart computer"` | Restart the PC | âœ… GUI popup |
-| `"shutdown computer"` | Shut down the PC | âœ… GUI popup |
-| `"open start menu"` | Open Windows Start Menu | â€” |
-| `"open task manager"` | Open Task Manager | â€” |
-| `"save"` / `"save as"` / `"new file"` / `"open file"` | File operations | â€” |
+| `"lock computer"` | Lock Windows session | GUI popup |
+| `"sleep computer"` | Put PC to sleep | GUI popup |
+| `"restart computer"` | Restart the PC | GUI popup |
+| `"shutdown computer"` | Shut down the PC | GUI popup |
+| `"open start menu"` | Open Windows Start Menu | — |
+| `"open task manager"` | Open Task Manager | — |
+| `"save"` / `"save as"` / `"new file"` / `"open file"` | File operations | — |
 
-### ðŸŽµ Media Controls
+### 🎵 Media Controls
 
 | Command | Action |
 |---|---|
@@ -319,14 +319,14 @@ Face Gesture Assistant supports a comprehensive set of voice commands covering e
 | `"skip forward"` / `"skip back"` | Media seek |
 | `"next video"` | Next media item |
 
-### ðŸ“  Dictation Mode
+### 📝 Dictation Mode
 
 | Command | Action |
 |---|---|
-| `"start typing"` | Enter dictation mode â€” speech is typed directly as keyboard input |
+| `"start typing"` | Enter dictation mode — speech is typed directly as keyboard input |
 | `"stop typing"` | Exit dictation mode |
 
-### ðŸŽ›ï¸  Tracking & Calibration
+### 🎛️ Tracking & Calibration
 
 | Command | Action |
 |---|---|
@@ -336,7 +336,7 @@ Face Gesture Assistant supports a comprehensive set of voice commands covering e
 | `"calibrate mouth"` | Recalibrate mouth-click threshold |
 | `"reset calibration"` | Restore default calibration |
 
-### ðŸ†˜ Safety
+### 🆘 Safety
 
 | Command | Action |
 |---|---|
@@ -346,12 +346,12 @@ Face Gesture Assistant supports a comprehensive set of voice commands covering e
 
 ---
 
-## ðŸ–¥ï¸  GUI Features
+## 🖥️ GUI Features
 
 ### Main Dashboard
 The PySide6 dark-mode dashboard provides:
-- **Large, high-contrast control buttons** â€” Start All Systems, Stop All, individual pipeline toggles
-- **Live status indicators** â€” Camera, Voice, and Tracking state chips
+- **Large, high-contrast control buttons** — Start All Systems, Stop All, individual pipeline toggles
+- **Live status indicators** — Camera, Voice, and Tracking state chips
 - **Real-time voice transcript overlay** — see what FGA heard in a floating HUD
 - **Settings and calibration access** from the toolbar
 
@@ -360,32 +360,31 @@ A transparent floating window that appears when voice is active, showing the las
 
 ### Calibration Wizard
 Step-by-step guided setup for:
-- **Head tracking calibration** â€” sets the neutral center point and sensitivity range
-- **Mouth-click calibration** â€” measures resting mouth distance and sets the open/click threshold
+- **Head tracking calibration** — sets the neutral center point and sensitivity range
+- **Mouth-click calibration** — measures resting mouth distance and sets the open/click threshold
 
 ### GUI Power Confirmation Dialogs
 
-For high-risk power commands, BUG uses a **safe graphical dialog** instead of voice confirmation (which is unreliable due to Whisper misrecognition):
+For high-risk power commands, Face Gesture Assistant uses a **safe graphical dialog** instead of voice confirmation (which is unreliable due to Whisper misrecognition):
 
 ```
 User: "restart computer"
-           â†“
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚              Confirm Restart                   â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚                                              â”‚
-â”‚  Are you sure you want to restart the        â”‚
-â”‚  computer?                                   â”‚
-â”‚                                              â”‚
-â”‚        [ YES ]          [ NO ]              â”‚
-â”‚                                              â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-           â†“
-   â”Œâ”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”
-   â–¼               â–¼
+           |
++----------------------------------------------+
+|              Confirm Restart                   |
++----------------------------------------------+
+|                                               |
+|  Are you sure you want to restart the         |
+|  computer?                                    |
+|                                               |
+|        [ YES ]          [ NO ]               |
+|                                               |
++----------------------------------------------+
+           |
+   +-------+-------+
+   |               |
 Click YES       Click NO
-   â”‚               â”‚
-   â–¼               â–¼
+   |               |
 Action Executes  Cancelled
 ```
 
@@ -396,28 +395,28 @@ Action Executes  Cancelled
 - Emergency stop remains active even while dialog is open
 
 **Safety features:**
-- âœ… No voice confirmation â€” eliminates Whisper misrecognition risk
-- âœ… Graphical YES/NO buttons only
-- âœ… Modal dialog â€” must click to continue
-- âœ… Dialog appears on top of all windows
-- âœ… Emergency stop still functional
+- No voice confirmation — eliminates Whisper misrecognition risk
+- Graphical YES/NO buttons only
+- Modal dialog — must click to continue
+- Dialog appears on top of all windows
+- Emergency stop still functional
 
 ---
 
-## ðŸ’» OS Compatibility
+## 💻 OS Compatibility
 
 | OS | Status | Notes |
 |---|---|---|
-| **Windows 10 / 11** | âœ… Fully supported | All features work out of the box |
-| **Linux â€” X11 Session** | âœ… Fully supported | Use Wayland scripts in `app/camera/` |
-| **Linux â€” Wayland Session** | âš ï¸ Partial | Camera, UI, and voice work; `pyautogui` mouse control fails due to Wayland's security model |
-| **macOS** | âŒ Not tested | `pywin32` (Windows-only) is unavailable |
+| **Windows 10 / 11** | Fully supported | All features work out of the box |
+| **Linux — X11 Session** | Fully supported | Use Wayland scripts in `app/camera/` |
+| **Linux — Wayland Session** | Partial | Camera, UI, and voice work; `pyautogui` mouse control fails due to Wayland security model |
+| **macOS** | Not tested | `pywin32` (Windows-only) is unavailable |
 
 > **Wayland users:** Run the experimental Wayland-compatible cursor scripts located in `app/camera/`.
 
 ---
 
-## ðŸ› ï¸ Setup & Installation
+## 🛠️ Setup & Installation
 
 ### Prerequisites
 - **Python 3.10 or higher**
@@ -460,11 +459,11 @@ pip install -r requirements.txt
 
 ### 4. MediaPipe Model (Bundled)
 
-The MediaPipe Face Landmarker model (`face_landmarker.task`, ~3.6 MB) is already bundled in `app/camera/` â€” no separate download required.
+The MediaPipe Face Landmarker model (`face_landmarker.task`, ~3.6 MB) is already bundled in `app/camera/` — no separate download required.
 
 ---
 
-## ðŸƒ Running the Application
+## 🏃 Running the Application
 
 ### Using the Helper Script (Recommended)
 
@@ -485,9 +484,9 @@ Once the dashboard opens:
 
 ---
 
-## ðŸ“¦ Building a Standalone Executable
+## 📦 Building a Standalone Executable
 
-Face Gesture Assistant can be packaged into a single `.exe` using PyInstaller â€” no Python installation required on the target machine.
+Face Gesture Assistant can be packaged into a single `.exe` using PyInstaller — no Python installation required on the target machine.
 
 ### Steps
 
@@ -512,7 +511,7 @@ The build configuration is defined in [`BUG_Dashboard.spec`](./BUG_Dashboard.spe
 
 ---
 
-## ðŸ§ª Testing
+## 🧪 Testing
 
 Face Gesture Assistant includes a dedicated test suite in the `tests/` directory:
 
@@ -547,56 +546,56 @@ python _transcribe_test.py  # Whisper transcription smoke test
 
 ---
 
-## ðŸ“ Project Structure
+## 📁 Project Structure
 
 ```
 Group-7-s-Projects-Repository/
-â”‚
-â”œâ”€â”€ app/                          # Main application source
-â”‚   â”œâ”€â”€ main.py                   # Entry point
-â”‚   â”œâ”€â”€ camera/                   # Face tracking & computer vision
-â”‚   â”œâ”€â”€ voice/                    # Speech recognition pipeline
-â”‚   â”œâ”€â”€ gestures/                 # Gesture event detection
-â”‚   â”œâ”€â”€ control/                  # System automation (mouse, keyboard, windows)
-â”‚   â”œâ”€â”€ core/                     # Command engine & settings
-â”‚   â”œâ”€â”€ ui/                       # PySide6 GUI components
-â”‚   â”œâ”€â”€ system/                   # System-level integrations
-â”‚   â””â”€â”€ utils/                    # Shared utilities
-â”‚
-â”œâ”€â”€ models/                       # Downloaded AI model files (auto-populated on first run)
-â”œâ”€â”€ tests/                        # Pytest test suite
-â”œâ”€â”€ whisper.cpp/                  # Git submodule â€” whisper.cpp for benchmarking
-â”œâ”€â”€ _whisper_stubs/               # Type stubs for Whisper
-â”‚
-â”œâ”€â”€ requirements.txt              # Python dependencies
-â”œâ”€â”€ run.ps1                       # Quick-launch PowerShell script
-â”œâ”€â”€ build.ps1                     # PyInstaller build script
-â”œâ”€â”€ BUG_Dashboard.spec            # PyInstaller spec file
-â”œâ”€â”€ _smoke.py                     # System smoke test
-â”œâ”€â”€ _transcribe_test.py           # Whisper transcription test
-â”œâ”€â”€ RESEARCH_ROADMAP.md           # Thesis goals and research progress
-â””â”€â”€ README.md                     # This file
+|
+├── app/                          # Main application source
+│   ├── main.py                   # Entry point
+│   ├── camera/                   # Face tracking & computer vision
+│   ├── voice/                    # Speech recognition pipeline
+│   ├── gestures/                 # Gesture event detection
+│   ├── control/                  # System automation (mouse, keyboard, windows)
+│   ├── core/                     # Command engine & settings
+│   ├── ui/                       # PySide6 GUI components
+│   ├── system/                   # System-level integrations
+│   └── utils/                    # Shared utilities
+|
+├── models/                       # Downloaded AI model files (auto-populated on first run)
+├── tests/                        # Pytest test suite
+├── whisper.cpp/                  # Git submodule — whisper.cpp for benchmarking
+├── _whisper_stubs/               # Type stubs for Whisper
+|
+├── requirements.txt              # Python dependencies
+├── run.ps1                       # Quick-launch PowerShell script
+├── build.ps1                     # PyInstaller build script
+├── BUG_Dashboard.spec            # PyInstaller spec file
+├── _smoke.py                     # System smoke test
+├── _transcribe_test.py           # Whisper transcription test
+├── RESEARCH_ROADMAP.md           # Thesis goals and research progress
+└── README.md                     # This file
 ```
 
 ---
 
-## ðŸ”¬ Research Roadmap
+## 🔬 Research Roadmap
 
 Face Gesture Assistant is actively evolving as a research project. The five core research contributions are:
 
 | # | Contribution | Status |
 |---|---|---|
-| 1 | **Adaptive Personal Calibration** â€” Dynamic sensitivity based on user's motor range | ðŸ”„ In Progress |
-| 2 | **Cross-modal Intent Arbitration** â€” Multimodal Intent Manager merging face + voice | ðŸ”„ In Progress |
-| 3 | **False-Action & Safety Suppression** â€” Risk classification + GUI confirmation policies | âœ… Partial (Emergency Stop done) |
-| 4 | **Offline Resource Efficiency** â€” Benchmarking Whisper.cpp vs Faster-Whisper vs Vosk | âœ… Partial (Faster-Whisper deployed) |
-| 5 | **User Evaluation** â€” Formal trials measuring target acquisition time, throughput, workload | â³ To Do |
+| 1 | **Adaptive Personal Calibration** — Dynamic sensitivity based on user motor range | In Progress |
+| 2 | **Cross-modal Intent Arbitration** — Multimodal Intent Manager merging face + voice | In Progress |
+| 3 | **False-Action & Safety Suppression** — Risk classification + GUI confirmation policies | Partial (Emergency Stop done) |
+| 4 | **Offline Resource Efficiency** — Benchmarking Whisper.cpp vs Faster-Whisper vs Vosk | Partial (Faster-Whisper deployed) |
+| 5 | **User Evaluation** — Formal trials measuring target acquisition time, throughput, workload | To Do |
 
 For full details, task breakdowns, and the thesis statement, see **[RESEARCH_ROADMAP.md](./RESEARCH_ROADMAP.md)**.
 
 ---
 
-## ðŸ¤ Contributing
+## 🤝 Contributing
 
 This is a Final Year Project repository maintained by **Group 7**. To contribute:
 
@@ -618,7 +617,7 @@ This is a Final Year Project repository maintained by **Group 7**. To contribute
 
 <div align="center">
 
-**Face Gesture Assistant** — Built with ❤️ by Group 7 | Final Year Project
+**Face Gesture Assistant** — Built with love by Group 7 | Final Year Project
 
 _Making computing accessible, one gesture at a time._
 
