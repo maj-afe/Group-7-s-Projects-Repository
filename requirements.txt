@@ -10,5 +10,5 @@ faster-whisper
 rapidfuzz
 pytest
 python-dotenv
-pywin32
+pywin32; sys_platform == 'win32'
 psutil
