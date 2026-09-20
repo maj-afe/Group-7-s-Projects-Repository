@@ -53,6 +53,7 @@ from .audio_capture import AudioCapture
 from .audio_processor import AudioProcessor
 from .vad import SileroVAD
 from .whisper_engine import WhisperEngine
+from app.core.perf_monitor import PerfMonitor
 
 
 
@@ -180,7 +181,11 @@ class SpeechRecognitionThread(QThread):
                     continue
 
                 # Whisper inference (~200–800 ms on CPU)
+                _tw = time.perf_counter()
                 raw_text = whisper.transcribe(audio_np, sr)
+                PerfMonitor.instance().record_whisper(
+                    (time.perf_counter() - _tw) * 1000
+                )
 
                 if not raw_text:
                     continue

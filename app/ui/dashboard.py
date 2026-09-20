@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                                QPushButton, QFrame, QGridLayout, QSizePolicy)
 from PySide6.QtCore import Qt
+from app.ui.perf_panel import PerfPanel
 
 class SystemStatusIndicator(QWidget):
     def __init__(self, name, status, color="#10B981"):
@@ -108,6 +109,23 @@ class DashboardWidget(QWidget):
         
         bottom_layout.addWidget(voice_frame, stretch=1)
         main_layout.addLayout(bottom_layout)
+
+        # --- PERFORMANCE MONITOR (always visible) ---
+        sep = QFrame()
+        sep.setFrameShape(QFrame.HLine)
+        sep.setStyleSheet("color: #1F1F33; background-color: #1F1F33; border: none; max-height: 1px;")
+        main_layout.addWidget(sep)
+
+        perf_container = QFrame()
+        perf_container.setStyleSheet(
+            "background-color: #0B0B14; border-radius: 0px;"
+        )
+        perf_outer = QVBoxLayout(perf_container)
+        perf_outer.setContentsMargins(0, 8, 0, 0)
+        perf_outer.setSpacing(0)
+        self.perf_panel = PerfPanel()
+        perf_outer.addWidget(self.perf_panel)
+        main_layout.addWidget(perf_container)
 
     def create_large_btn(self, text, bg_color, border_color):
         btn = QPushButton(text)

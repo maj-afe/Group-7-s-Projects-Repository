@@ -14,6 +14,8 @@ Design decisions:
 import queue
 import sounddevice as sd
 
+from app.core.perf_monitor import PerfMonitor
+
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -114,6 +116,7 @@ class AudioCapture:
         """SoundDevice callback — runs on a dedicated audio thread."""
         if status:
             print(f"[AudioCapture] SoundDevice status: {status}")
+            PerfMonitor.instance().record_overflow()
         if self._running:
             try:
                 self._queue.put_nowait(bytes(indata))

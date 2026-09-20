@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
             "BUG - Hands-Free Browsing Assistant"
         )
 
-        self.setMinimumSize(1000, 700)
+        self.setMinimumSize(1000, 900)
 
         self.setStyleSheet(
             "background-color: #000000;"

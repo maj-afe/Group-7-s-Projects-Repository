@@ -1,7 +1,10 @@
+import time
+
 from PySide6.QtCore import QObject, Signal
 
 from .speech_recognition import SpeechRecognitionThread
 from .command_handler import CommandHandler
+from app.core.perf_monitor import PerfMonitor
 
 
 class VoiceAssistant(QObject):
@@ -85,20 +88,22 @@ class VoiceAssistant(QObject):
         )
 
         try:
-
+            _t0 = time.perf_counter()
             result = self.command_handler.execute(
                 text
             )
+            dispatch_ms = (time.perf_counter() - _t0) * 1000
+            PerfMonitor.instance().record_command(
+                result or "unknown", dispatch_ms
+            )
 
             if result:
-
                 self.command_executed.emit(
                     text,
                     result
                 )
 
             else:
-
                 self.command_executed.emit(
                     text,
                     "unknown"

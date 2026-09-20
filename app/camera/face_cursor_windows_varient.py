@@ -9,6 +9,8 @@ from mediapipe.tasks.python import vision
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtGui import QImage
 
+from app.core.perf_monitor import PerfMonitor
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(SCRIPT_DIR, "face_landmarker.task")
 
@@ -83,7 +85,14 @@ class CameraThread(QThread):
 
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
             timestamp_ms = int(time.time() * 1000)
+
+            # --- Perf: time face detection ---
+            _t0 = time.perf_counter()
             results = landmarker.detect_for_video(mp_image, timestamp_ms)
+            PerfMonitor.instance().record_face_detect(
+                (time.perf_counter() - _t0) * 1000
+            )
+            PerfMonitor.instance().record_frame()
 
             if results.face_landmarks:
                 landmarks = results.face_landmarks[0]
@@ -115,7 +124,12 @@ class CameraThread(QThread):
                     self.smooth_x = self.alpha * target_x + (1 - self.alpha) * self.smooth_x
                     self.smooth_y = self.alpha * target_y + (1 - self.alpha) * self.smooth_y
 
+                    # --- Perf: time cursor move ---
+                    _tc = time.perf_counter()
                     pyautogui.moveTo(int(self.smooth_x), int(self.smooth_y))
+                    PerfMonitor.instance().record_cursor_move(
+                        (time.perf_counter() - _tc) * 1000
+                    )
 
                     # Direct gesture scrolling based on vertical head movement (dy)
                     if dy < -0.04: # Looking up

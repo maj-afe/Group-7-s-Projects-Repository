@@ -38,6 +38,8 @@ from typing import Callable
 
 import numpy as np
 
+from app.core.perf_monitor import PerfMonitor
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -243,7 +245,18 @@ class SileroVAD:
         audio_f32 = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
 
         duration_ms = len(audio_f32) * 1000 // SAMPLE_RATE
+
+        # Drop segments shorter than 400 ms — these are almost always
+        # brief noise spikes or background sounds that aren't real commands.
+        MIN_SEGMENT_SAMPLES = int(SAMPLE_RATE * 0.4)  # 6400 samples = 400 ms
+        if len(audio_f32) < MIN_SEGMENT_SAMPLES:
+            print(f"[VAD] Segment too short ({duration_ms} ms) — dropped (noise filter)")
+            PerfMonitor.instance().record_vad_dropped()
+            self._reset()
+            return
+
         print(f"[VAD] Segment ready — {duration_ms} ms ({len(audio_f32)} samples)")
+        PerfMonitor.instance().record_vad_segment(float(duration_ms))
 
         self._on_segment(audio_f32, SAMPLE_RATE)
         self._reset()

@@ -22,6 +22,8 @@ HPF enabled — removes low-frequency rumble (desk vibration, AC hum).
 import struct
 from typing import Optional
 
+import numpy as np
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -102,13 +104,20 @@ class AudioProcessor:
             return frame_bytes
 
         try:
-            # The pywebrtc-audio API:
-            #   process(near: bytes, far: bytes | None) -> bytes
-            result = self._processor.process(
-                frame_bytes,
-                far_end_bytes,
-            )
-            return result if result else frame_bytes
+            # pywebrtc_audio.AudioProcessor.process() requires numpy.ndarray (int16),
+            # NOT raw bytes. Convert in → process → convert out.
+            near_np = np.frombuffer(frame_bytes, dtype=np.int16)
+
+            far_np: Optional[np.ndarray] = None
+            if far_end_bytes is not None:
+                far_np = np.frombuffer(far_end_bytes, dtype=np.int16)
+
+            result_np = self._processor.process(near_np, far_np)
+
+            # result_np is a numpy array — convert back to bytes
+            if result_np is not None and len(result_np) > 0:
+                return result_np.astype(np.int16).tobytes()
+            return frame_bytes
 
         except Exception as e:
             print(f"[AudioProcessor] Process error (falling back): {e}")
