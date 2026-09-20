@@ -189,6 +189,43 @@ class CommandHandler:
         return text
 
     # =========================================================
+    # HALLUCINATED PREFIX STRIPPING
+    # =========================================================
+
+    # Whisper sometimes prepends a phrase from its vocabulary/initial_prompt
+    # to the actual command when it encounters background noise or reverb.
+    # These prefixes are stripped before fuzzy matching so the real command
+    # underneath can be recognized correctly.
+    #
+    # Observed hallucinated prefixes (from real session logs):
+    #   "open reddit"     — appears as prefix before scroll/page commands
+    #   "open youtube"    — similar
+    #   "turn back"       — prepended before "volume up/down"
+    _HALLUCINATED_PREFIXES = [
+        "open reddit",
+        "open youtube",
+        "turn back",
+        "open google",
+        "open chrome",
+    ]
+
+    def _strip_hallucinated_prefixes(self, text: str) -> str:
+        """
+        Remove known Whisper hallucinated prefixes from the transcript.
+
+        When Whisper hears background noise or reverb it sometimes prepends
+        a phrase from its decoder vocabulary before the real command.
+        We strip those here so the underlying command can still be matched.
+        """
+        for prefix in self._HALLUCINATED_PREFIXES:
+            if text.startswith(prefix + " "):
+                stripped = text[len(prefix):].strip()
+                if stripped:
+                    print(f"[Voice] Stripped hallucinated prefix '{prefix}': '{text}' → '{stripped}'")
+                    return stripped
+        return text
+
+    # =========================================================
     # COOLDOWN CHECK (keyed on COMMAND, not raw transcript)
     # =========================================================
 
@@ -490,6 +527,12 @@ class CommandHandler:
             return "dictation"
 
         # ----------------------------------------------------------
+        # STRIP HALLUCINATED PREFIXES (e.g. "open reddit scroll down"
+        # → "scroll down" caused by Whisper decoder bias)
+        # ----------------------------------------------------------
+        normalized = self._strip_hallucinated_prefixes(normalized)
+
+        # ----------------------------------------------------------
         # APPLY FUZZY CORRECTION (multi-word only)
         # ----------------------------------------------------------
         normalized = self._fuzzy_match(normalized)
@@ -552,7 +595,11 @@ class CommandHandler:
         # MOUSE
         # ===========================================================
 
-        if normalized in {"click", "left click"}:
+        if normalized in {
+            "click", "left click",
+            # Whisper mishear / word-order variants seen in logs
+            "click delete", "click edit",
+        }:
             pyautogui.click()
             return self._done_if_ready("click", normalized)
 
@@ -560,7 +607,11 @@ class CommandHandler:
             pyautogui.doubleClick(interval=0.1)
             return self._done_if_ready("double_click", normalized)
 
-        if normalized in {"right click", "right-click"}:
+        if normalized in {
+            "right click", "right-click",
+            # Word-order reversal Whisper consistently produces
+            "click right",
+        }:
             pyautogui.rightClick()
             return self._done_if_ready("right_click", normalized)
 
@@ -570,9 +621,11 @@ class CommandHandler:
 
         if normalized in {
             "scroll down", "page down",
-            # Vosk misheard aliases for "scroll down"
+            # Whisper/Vosk misheard aliases for "scroll down"
             "sold out", "rolled out", "slow down", "pull down",
             "roll down", "go down",
+            "flip down",            # Whisper mishear (seen in logs)
+            "scroll",               # incomplete transcript of "scroll down"
         }:
             if self._is_on_cooldown("scroll_down"):
                 return None
@@ -608,7 +661,11 @@ class CommandHandler:
         # BROWSER NAVIGATION
         # ===========================================================
 
-        if normalized in {"go back", "previous page"}:
+        if normalized in {
+            "go back", "previous page",
+            # Single-word shorthand (Whisper often drops "go")
+            "back",
+        }:
             pyautogui.hotkey("alt", "left")
             return self._done_if_ready("go_back", normalized)
 

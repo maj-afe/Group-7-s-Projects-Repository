@@ -43,12 +43,16 @@ COMPUTE_TYPE: str = "int8"         # int8 (cpu) | float16 (cuda) | float32
 # IMPORTANT: Include exact words that Whisper was hallucinating, so it
 # learns the correct pronunciation for this domain.
 _INITIAL_PROMPT: str = (
-    "open chrome open notepad open calculator open youtube open reddit "
+    # Site-open commands: only keep sites that DON'T cause prefix hallucinations.
+    # NOTE: "open reddit" and "open youtube" were removed — Whisper was prepending
+    #       these as spurious prefixes before real commands (e.g. "open reddit scroll down").
+    "open chrome open notepad open calculator open facebook open github "
     "scroll down scroll up page down page up new tab close tab go back "
     "volume up volume down minimize window close window refresh "
     "select all copy paste cut undo redo click double click right click "
     "change tab next tab previous tab start typing stop typing "
-    "emergency stop enable control"
+    "emergency stop enable control "
+    "calibrate calibration start calibration reset calibration"
 )
 
 # Where to cache the model weights

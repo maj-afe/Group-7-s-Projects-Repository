@@ -31,7 +31,7 @@ CHANNELS: int = 1
 NS_LEVEL: int = 2                  # 0=6dB, 1=12dB, 2=18dB, 3=21dB
 ENABLE_NS: bool = True
 ENABLE_AGC: bool = True
-ENABLE_AEC: bool = True            # Low impact when no far-end audio
+ENABLE_AEC: bool = False           # Disabled by default — only useful when system audio is playing
 ENABLE_HPF: bool = True
 
 
@@ -127,14 +127,16 @@ class AudioProcessor:
         try:
             import pywebrtc_audio  # type: ignore[import]
 
+            # Actual pywebrtc_audio API (kwargs differ from old docs):
+            #   noise_suppression, echo_cancellation, high_pass_filter, auto_gain_control
             self._processor = pywebrtc_audio.AudioProcessor(
                 sample_rate=self._sample_rate,
                 num_channels=CHANNELS,
-                enable_high_pass_filter=ENABLE_HPF,
-                enable_noise_suppression=ENABLE_NS,
-                noise_suppression_level=self._ns_level,
-                enable_gain_control=ENABLE_AGC,
-                enable_echo_cancellation=ENABLE_AEC,
+                high_pass_filter=ENABLE_HPF,
+                noise_suppression=ENABLE_NS,
+                ns_level=self._ns_level,
+                auto_gain_control=ENABLE_AGC,
+                echo_cancellation=ENABLE_AEC,
             )
             self._available = True
             print(
