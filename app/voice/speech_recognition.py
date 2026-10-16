@@ -156,7 +156,7 @@ class SpeechRecognitionThread(QThread):
             return
 
         self.status_update.emit("Listening")
-        print("[Voice] Pipeline running: WebRTC APM → Silero VAD → Faster-Whisper")
+        print("[Voice] Pipeline running: WebRTC APM -> Silero VAD -> Faster-Whisper")
 
         # ----------------------------------------------------------
         # 6. Main loop
