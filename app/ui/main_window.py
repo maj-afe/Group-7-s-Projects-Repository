@@ -13,6 +13,7 @@ from app.camera.face_cursor_windows_varient import CameraThread
 # ADDED: Signal bridge and system controller
 from app.system.signal_bridge import SignalBridge
 from app.system.system_controller import SystemController
+from app.system import startup_manager
 
 from app.ui.voice_overlay import VoiceOverlay
 
@@ -134,6 +135,18 @@ class MainWindow(QMainWindow):
             self._show_power_confirmation_dialog
         )
 
+        # ------------------------------------------
+        # Startup Toggle (ADDED)
+        # ------------------------------------------
+
+        # Reflect current registry state without firing the signal
+        self.dashboard.startup_toggle.set_checked(
+            startup_manager.is_enabled(), silent=True
+        )
+        self.dashboard.startup_toggle.toggled.connect(
+            self._on_startup_toggle
+        )
+
     # ==================================================
     # POWER CONFIRMATION DIALOG (ADDED)
     # ==================================================
@@ -203,6 +216,26 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             print(f"[GUI] Error showing power dialog: {e}")
+
+    # ==================================================
+    # STARTUP TOGGLE (ADDED)
+    # ==================================================
+
+    def _on_startup_toggle(self, enabled: bool):
+        """Called when the user clicks the Launch on Startup toggle."""
+        if enabled:
+            ok = startup_manager.enable()
+            label = "ON"
+        else:
+            ok = startup_manager.disable()
+            label = "OFF"
+
+        if ok:
+            print(f"[MainWindow] Launch on startup: {label}")
+        else:
+            # Operation failed — revert the toggle visually (silently)
+            print(f"[MainWindow] Startup registry operation failed — reverting toggle.")
+            self.dashboard.startup_toggle.set_checked(not enabled, silent=True)
 
     # ==================================================
     # START ALL
