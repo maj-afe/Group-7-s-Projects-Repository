@@ -379,6 +379,14 @@ class MainWindow(QMainWindow):
             self.pause_all()
         elif command == "control_enabled":
             self.start_all()
+        elif command and command.startswith("power_pending:"):
+            action = command.split(":", 1)[1]
+            self.dashboard.voice_command_lbl.setText(
+                f'⚠️ Say "sure {action}" to confirm'
+            )
+        elif command == "power_cancelled":
+            self.dashboard.voice_command_lbl.setText("Power action cancelled")
+
 
     # ==================================================
     # VOICE ERROR

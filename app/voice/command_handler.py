@@ -54,6 +54,11 @@ class CommandHandler:
         # Emergency stop flag
         self.enabled = True
 
+        # Two-step voice confirmation for power actions.
+        # Set to "lock", "sleep", "restart", or "shutdown" while waiting
+        # for the user to say "sure <action>" to confirm.
+        self._pending_power_action: str | None = None
+
         # Continuous scrolling state (kept for API compatibility)
         self.scrolling = False
         self.scroll_direction = 0
@@ -109,9 +114,11 @@ class CommandHandler:
             # Window
             "switch window", "next window", "change window",
             "minimize window", "maximize window", "close window",
+            "reduce window",
             # Media
             "volume up", "increase volume", "sound up",
             "volume down", "decrease volume", "sound down",
+            "unmute volume", "and mute volume", "and mute",
             "next video", "next media",
             "skip forward", "forward ten seconds", "forward 10 seconds", "jump ahead",
             "skip back", "back ten seconds", "video back",
@@ -145,8 +152,10 @@ class CommandHandler:
             "move window left", "move window right", 
             "move window up", "move window down",
             "close this window",
-            # System Power Control (ADDED)
+            # System Power (voice-confirmed — say "sure <action>" to execute)
             "lock computer", "sleep computer", "restart computer", "shutdown computer",
+            "sure lock", "sure sleep", "sure restart", "sure shutdown",
+            "confirm lock", "confirm sleep", "confirm restart", "confirm shutdown",
         ]
 
     # =========================================================
@@ -485,17 +494,30 @@ class CommandHandler:
         return False
 
     # =========================================================
-    # POWER COMMAND HANDLING (using Signals)
+    # POWER COMMAND HANDLING (direct execution after voice confirmation)
     # =========================================================
 
-    def _trigger_power_confirmation(self, action: str):
+    def _trigger_power_action(self, action: str):
         """
-        Trigger the power confirmation dialog via Qt signal.
-        This is thread-safe and will be executed on the GUI thread.
+        Directly execute a power action after voice confirmation.
+        Runs on the voice thread — SystemController calls are non-blocking
+        (they spawn the OS command and return immediately).
         """
-        # Emit the signal (this will be received by the main window on GUI thread)
-        self.signal_bridge.request_power_confirmation.emit(action)
-        print(f"[Voice] Power confirmation requested: {action}")
+        action_map = {
+            "lock":     self.system_controller.lock_computer,
+            "sleep":    self.system_controller.sleep_computer,
+            "restart":  self.system_controller.restart_computer,
+            "shutdown": self.system_controller.shutdown_computer,
+        }
+        fn = action_map.get(action)
+        if fn:
+            success = fn()
+            if success:
+                print(f"[Voice] Power action executed: {action}")
+            else:
+                print(f"[Voice] Power action failed: {action} — {self.system_controller.get_last_error()}")
+        else:
+            print(f"[Voice] Unknown power action: {action}")
 
     # =========================================================
     # MAIN COMMAND PROCESSOR
@@ -545,8 +567,98 @@ class CommandHandler:
 
         if normalized in {"enable control", "enable automation"}:
             self.enabled = True
+            self._pending_power_action = None   # clear any pending confirmation
             print("[Voice] Control re-enabled")
             return self._done("control_enabled", "control_enabled")
+
+        # ===========================================================
+        # POWER COMMANDS — bypass emergency-stop, use voice confirmation
+        # ===========================================================
+        # Step 1: user says "restart computer" / "shutdown computer" etc.
+        #         → set pending state and wait for voice confirmation.
+        # Step 2: user says "sure restart" / "sure shutdown" etc.
+        #         → execute the action.
+        # "cancel" at any point clears pending.
+
+        _POWER_TRIGGERS = {
+            "lock computer":     "lock",
+            "sleep computer":    "sleep",
+            "restart computer":  "restart",
+            "shutdown computer": "shutdown",
+        }
+        _POWER_CONFIRMS = {
+            "sure lock":     "lock",
+            "sure sleep":    "sleep",
+            "sure restart":  "restart",
+            "sure shutdown": "shutdown",
+            # short forms Whisper may produce
+            "confirm lock":     "lock",
+            "confirm sleep":    "sleep",
+            "confirm restart":  "restart",
+            "confirm shutdown": "shutdown",
+        }
+
+        # Cancel any pending power action
+        if normalized in {"cancel", "no", "nope"} and self._pending_power_action:
+            print(f"[Voice] Power action '{self._pending_power_action}' cancelled")
+            self._pending_power_action = None
+            return "power_cancelled"
+
+        # Step 2 — confirmation received
+        if normalized in _POWER_CONFIRMS:
+            action = _POWER_CONFIRMS[normalized]
+            if self._pending_power_action == action:
+                self._pending_power_action = None
+                print(f"[Voice] Power action confirmed: {action}")
+                self._trigger_power_action(action)
+                return self._done(f"{action}_computer", f"{action}_computer")
+            else:
+                # Confirmation for a different action — ignore
+                print(f"[Voice] Confirmation '{action}' does not match pending '{self._pending_power_action}'")
+                return None
+
+        # Step 1 — initial power command heard
+        if normalized in _POWER_TRIGGERS:
+            if self._is_on_cooldown("power_trigger"):
+                return None
+            action = _POWER_TRIGGERS[normalized]
+            self._pending_power_action = action
+            self._mark_executed("power_trigger")
+            print(f"[Voice] Power action pending: '{action}' — say 'sure {action}' to confirm")
+            return f"power_pending:{action}"
+
+        # ===========================================================
+        # WINDOW CONTROL — bypass emergency-stop
+        # (these are OS-level window ops, not cursor automation)
+        # ===========================================================
+
+        if normalized in {
+            "switch window", "next window", "change window",
+            "which will do", "switch will do",
+        }:
+            pyautogui.hotkey("alt", "tab")
+            return self._done_if_ready("switch_window", normalized)
+
+        if normalized in {
+            "minimize window", "minimize",
+            # Whisper mishear aliases
+            "minimize david do", "minimize damage", "sweet window",
+            "reduce window", "reduce",
+        }:
+            pyautogui.hotkey("win", "down")
+            return self._done_if_ready("minimize", normalized)
+
+        if normalized in {
+            "maximize window", "maximize",
+            "maximise window", "maximise",
+            "max window", "make it bigger",
+        }:
+            pyautogui.hotkey("win", "up")
+            return self._done_if_ready("maximize", normalized)
+
+        if normalized in {"close window", "close this window"}:
+            pyautogui.hotkey("alt", "f4")
+            return self._done_if_ready("close_window", normalized)
 
         # If system is disabled, ignore all other commands
         if not self.enabled:
@@ -808,6 +920,7 @@ class CommandHandler:
             "minimize window", "minimize",
             # Misheard aliases
             "minimize david do", "minimize damage", "sweet window",
+            "reduce window", "reduce",
         }:
             pyautogui.hotkey("win", "down")
             return self._done_if_ready("minimize", normalized)
@@ -837,7 +950,12 @@ class CommandHandler:
             pyautogui.press("volumemute")
             return self._done_if_ready("mute", normalized)
 
-        if normalized == "unmute":
+        if normalized in {
+            "unmute",
+            # Whisper mishears of "unmute" / "unmute volume"
+            "unmute volume", "and mute volume", "and mute",
+            "un mute", "unimute",
+        }:
             pyautogui.press("volumemute")
             return self._done_if_ready("unmute", normalized)
 
@@ -1129,45 +1247,8 @@ class CommandHandler:
             pyautogui.hotkey("ctrl", "shift", "esc")
             return self._done_if_ready("open_task_manager", normalized)
 
-        # ===========================================================
-        # SYSTEM POWER CONTROL (NEW - GUI CONFIRMATION via Signals)
-        # ===========================================================
-
-        # ---- Lock Computer ----
-        if normalized == "lock computer":
-            if self._is_on_cooldown("lock_computer"):
-                return None
-            
-            # Trigger GUI confirmation via signal
-            self._trigger_power_confirmation("lock")
-            return self._done("lock_computer", "lock_computer")
-
-        # ---- Sleep Computer ----
-        if normalized == "sleep computer":
-            if self._is_on_cooldown("sleep_computer"):
-                return None
-            
-            # Trigger GUI confirmation via signal
-            self._trigger_power_confirmation("sleep")
-            return self._done("sleep_computer", "sleep_computer")
-
-        # ---- Restart Computer ----
-        if normalized == "restart computer":
-            if self._is_on_cooldown("restart_computer"):
-                return None
-            
-            # Trigger GUI confirmation via signal
-            self._trigger_power_confirmation("restart")
-            return self._done("restart_computer", "restart_computer")
-
-        # ---- Shutdown Computer ----
-        if normalized == "shutdown computer":
-            if self._is_on_cooldown("shutdown_computer"):
-                return None
-            
-            # Trigger GUI confirmation via signal
-            self._trigger_power_confirmation("shutdown")
-            return self._done("shutdown_computer", "shutdown_computer")
+        # Power commands are now handled earlier (before the enabled guard)
+        # so they work even after emergency stop. See _POWER_TRIGGERS block above.
 
         # ===========================================================
         # WINDOW MANAGEMENT
