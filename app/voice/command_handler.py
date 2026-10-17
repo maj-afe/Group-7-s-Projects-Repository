@@ -108,7 +108,7 @@ class CommandHandler:
             "select next word", "select previous word",
             # Window
             "switch window", "next window", "change window",
-            "minimize window", "close window",
+            "minimize window", "maximize window", "close window",
             # Media
             "volume up", "increase volume", "sound up",
             "volume down", "decrease volume", "sound down",
@@ -811,6 +811,15 @@ class CommandHandler:
         }:
             pyautogui.hotkey("win", "down")
             return self._done_if_ready("minimize", normalized)
+
+        if normalized in {
+            "maximize window", "maximize",
+            # Whisper mishear / word-order variants
+            "maximise window", "maximise",
+            "max window", "make it bigger",
+        }:
+            pyautogui.hotkey("win", "up")
+            return self._done_if_ready("maximize", normalized)
 
         if normalized == "close window":
             pyautogui.hotkey("alt", "f4")

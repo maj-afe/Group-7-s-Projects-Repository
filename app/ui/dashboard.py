@@ -106,7 +106,7 @@ class DashboardWidget(QWidget):
         
         # --- HEADER ---
         header_layout = QHBoxLayout()
-        title = QLabel("BUG Assistant: Accessibility Control Center")
+        title = QLabel("FGA Accessibility Control Center")
         title.setStyleSheet("color: #FFFFFF; font-size: 28px; font-weight: bold;")
         header_layout.addWidget(title)
         header_layout.addStretch()
@@ -118,7 +118,7 @@ class DashboardWidget(QWidget):
         startup_lbl.setStyleSheet("color: #9CA3AF; font-size: 14px;")
         self.startup_toggle = ToggleSwitch(checked=False)
         self.startup_toggle.setToolTip(
-            "When ON, BUG will launch automatically every time Windows starts."
+            "When ON, FGA will launch automatically every time Windows starts."
         )
         startup_row.addWidget(startup_lbl)
         startup_row.addWidget(self.startup_toggle)

@@ -23,7 +23,7 @@ from pathlib import Path
 
 # Registry key where per-user startup entries live
 _REG_PATH = r"Software\Microsoft\Windows\CurrentVersion\Run"
-_APP_NAME = "BUG_Assistant"
+_APP_NAME = "FGA_Accessibility"
 
 
 def _get_launch_command() -> str:

@@ -139,7 +139,7 @@ class VoiceSetupWizard(QDialog):
         self._current_step = 0
         self._is_listening = False
 
-        self.setWindowTitle("BUG — Voice Setup Wizard")
+        self.setWindowTitle("FGA — Voice Setup Wizard")
         self.setFixedSize(500, 360)
         self.setStyleSheet(_STYLE)
         self.setWindowFlags(Qt.Dialog | Qt.WindowCloseButtonHint)

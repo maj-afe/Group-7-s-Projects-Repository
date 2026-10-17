@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle(
-            "BUG - Hands-Free Browsing Assistant"
+            "FGA - Accessibility Control Center"
         )
 
         self.setMinimumSize(1000, 700)

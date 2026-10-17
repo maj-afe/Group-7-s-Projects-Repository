@@ -165,7 +165,7 @@ class LearnAliasDialog(QDialog):
         self._handler = voice_assistant.command_handler
         self._is_listening = False
 
-        self.setWindowTitle("BUG — Teach Me a New Command")
+        self.setWindowTitle("FGA — Teach Me a New Command")
         self.setMinimumWidth(480)
         self.setStyleSheet(_STYLE)
         self.setWindowFlags(
